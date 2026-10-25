@@ -74,7 +74,19 @@ body{
 #rotateTip .ph{font-size:64px;animation:tilt 1.8s ease-in-out infinite;}
 @keyframes tilt{0%,100%{transform:rotate(0)}50%{transform:rotate(90deg)}}
 #rotateTip .tx{font-size:19px;font-weight:800;line-height:1.7;}
-@media (orientation:portrait) and (max-width:900px){#rotateTip{display:flex;}}
+/* 手机竖屏：游戏画面自动旋转 90° 呈横屏布局，无需真的转手机 */
+@media (orientation:portrait) and (max-width:900px){
+  #stage{
+    position:fixed;left:50%;top:50%;
+    width:100vh;height:100vw;max-width:none;max-height:none;
+    transform:translate(-50%,-50%) rotate(90deg);
+    transform-origin:center center;
+    border-radius:0;
+  }
+  @supports (width:100dvh){
+    #stage{width:100dvh;height:100dvw;}
+  }
+}
 
 /* ============ 开场漫画 ============ */
 #comicScreen{background:linear-gradient(160deg,#2F2A3A,#5B3F52 55%,#8A5A63);}
