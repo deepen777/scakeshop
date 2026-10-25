@@ -1,0 +1,3447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>🍰 甜蜜烘焙屋</title>
+<style>
+:root{
+  --pink:#FF6B9D; --pink-d:#D6336C; --pink-l:#FFB6C1; --cream:#FFF8F0;
+  --caramel:#C98A5B; --brown:#5C4953; --mint:#7BD1B8; --gold:#F5B841;
+  --topH:56px; --tabH:54px; --railH:84px;
+  --fs:15px;
+  --r:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;overscroll-behavior:none;}
+body{
+  font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sans-serif;
+  background:radial-gradient(circle at 50% 0%,#FFE9EF 0%,#FFD9E4 45%,#F3D3DC 100%);
+  display:flex;align-items:center;justify-content:center;
+  user-select:none;-webkit-user-select:none;color:var(--brown);font-size:var(--fs);
+  touch-action:manipulation;
+}
+#stage{
+  position:relative;width:100vw;max-width:1180px;height:100vh;max-height:780px;
+  background:var(--cream);overflow:hidden;
+  box-shadow:0 18px 60px rgba(214,51,108,.28);
+}
+@supports (height:100dvh){
+  #stage{height:100dvh;}
+}
+@media (min-width:1190px) and (min-height:800px){#stage{border-radius:22px;}}
+.screen{position:absolute;top:0;right:0;bottom:0;left:0;display:none;flex-direction:column;overflow:hidden;}
+.screen.on{display:flex;}
+
+/* ============ 通用控件 ============ */
+.btn{
+  font-family:inherit;font-size:var(--fs);font-weight:700;color:#fff;
+  background:linear-gradient(#FF87B3,#FF5C94);border:none;border-radius:14px;
+  padding:10px 20px;cursor:pointer;line-height:1.25;
+  box-shadow:0 4px 0 #D6336C,0 6px 14px rgba(214,51,108,.3);
+  transition:transform .08s,box-shadow .08s;
+}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #D6336C,0 2px 6px rgba(214,51,108,.3);}
+.btn.secondary{background:linear-gradient(#fff,#FFEFF4);color:var(--pink-d);box-shadow:0 4px 0 #E9A8BE,0 6px 14px rgba(214,51,108,.16);}
+.btn.secondary:active{box-shadow:0 1px 0 #E9A8BE;}
+.btn.ghost{background:rgba(255,255,255,.72);color:var(--brown);box-shadow:0 3px 0 rgba(0,0,0,.13);}
+.btn.danger{background:linear-gradient(#FF8A6B,#F4512F);box-shadow:0 4px 0 #B93A1D;}
+.btn.tiny{font-size:12px;padding:6px 12px;border-radius:11px;box-shadow:0 3px 0 currentColor;}
+.btn.sm{font-size:13px;padding:8px 14px;}
+.btn[disabled]{filter:grayscale(.7) brightness(1.05);cursor:not-allowed;opacity:.65;}
+.chip{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.7);
+  border-radius:999px;padding:4px 11px;font-size:12px;font-weight:700;}
+.tag{display:inline-block;background:#FFE3EC;color:var(--pink-d);border-radius:8px;padding:2px 8px;font-size:11px;font-weight:700;}
+
+/* 实体按键（3D 凸起） */
+.pkey{
+  font-family:inherit;font-size:20px;font-weight:800;color:#7A4A58;
+  background:linear-gradient(#FFFFFF 0%,#FFF1F5 55%,#F6DEE7 100%);
+  border:1px solid #E7B9CA;border-radius:12px;cursor:pointer;
+  box-shadow:0 4px 0 #D292AB,0 6px 12px rgba(0,0,0,.16),inset 0 1px 0 #fff;
+  transition:transform .05s,box-shadow .05s;
+}
+.pkey:active,.pkey.down{transform:translateY(4px);box-shadow:0 0 0 #D292AB,0 2px 5px rgba(0,0,0,.18),inset 0 1px 0 #fff;}
+
+/* ============ 竖屏提示 ============ */
+#rotateTip{
+  position:absolute;top:0;right:0;bottom:0;left:0;z-index:900;display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  background:linear-gradient(135deg,#FFC9D8,#FFE0C7);text-align:center;padding:24px;
+}
+#rotateTip .ph{font-size:64px;animation:tilt 1.8s ease-in-out infinite;}
+@keyframes tilt{0%,100%{transform:rotate(0)}50%{transform:rotate(90deg)}}
+#rotateTip .tx{font-size:19px;font-weight:800;line-height:1.7;}
+@media (orientation:portrait) and (max-width:900px){#rotateTip{display:flex;}}
+
+/* ============ 开场漫画 ============ */
+#comicScreen{background:linear-gradient(160deg,#2F2A3A,#5B3F52 55%,#8A5A63);}
+.comic-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:10px;min-height:0;}
+.comic-frame{
+  width:min(760px,96%);height:min(400px,84%);display:flex;gap:12px;
+  background:#FFFDF8;border-radius:20px;padding:12px;box-shadow:0 14px 40px rgba(0,0,0,.35);cursor:pointer;
+}
+.comic-art{font-size:clamp(26px,8.5vh,58px);}
+.comic-art{
+  flex:1.1;position:relative;border-radius:14px;overflow:hidden;min-height:0;
+  display:flex;align-items:center;justify-content:center;background:#F6E7D8;
+}
+.comic-art .art-in{position:absolute;top:0;right:0;bottom:0;left:0;display:flex;align-items:center;justify-content:center;font-size:74px;}
+.comic-art .big{font-size:96px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.2));}
+.comic-lines{flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px;padding:4px 6px;min-width:0;}
+.comic-lines .who{font-size:12px;font-weight:800;color:var(--pink-d);letter-spacing:1px;}
+.comic-lines .line{
+  font-size:clamp(13px,2.1vh,17px);line-height:1.85;min-height:3.7em;color:#432F3A;font-weight:600;
+}
+.comic-lines .line .cur{color:var(--pink);}
+.comic-foot{
+  flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:12px;
+  padding:8px 14px 14px;position:relative;
+}
+.comic-dots{display:flex;gap:6px;}
+.comic-dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.35);transition:.25s;}
+.comic-dots i.now{background:#fff;width:22px;border-radius:4px;}
+.comic-dots i.past{background:rgba(255,255,255,.65);}
+
+/* ============ 主菜单 ============ */
+#menuScreen{background:linear-gradient(180deg,#FFF3F7 0%,#FFE6EF 60%,#FFDCE8 100%);align-items:center;justify-content:center;}
+.menu-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px;text-align:center;}
+.menu-title{font-size:clamp(30px,5.2vh,48px);font-weight:900;letter-spacing:2px;
+  background:linear-gradient(180deg,#FF87B3,#D6336C);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 3px 0 rgba(255,255,255,.85));}
+.menu-sub{font-size:13px;color:#A5737F;font-weight:600;}
+#menuChar{width:clamp(70px,13vh,120px);height:clamp(120px,22vh,205px);cursor:pointer;
+  transition:transform .2s;}
+#menuChar:active{transform:scale(.94);}
+.menu-btns{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;max-width:460px;margin-top:4px;}
+.menu-stats{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px;}
+.menu-stats .chip{background:#fff;color:var(--pink-d);box-shadow:0 2px 6px rgba(214,51,108,.15);font-size:12px;}
+
+/* ============ 游戏舞台布局 ============ */
+#gameRoot.on{display:grid;grid-template-rows:var(--topH) 1fr var(--railH) var(--tabH);height:100%;background:#FFF6EC;}
+#topbar{
+  display:flex;align-items:center;gap:7px;padding:0 10px;
+  background:linear-gradient(135deg,#FF8FB1,#FF6B9D);color:#fff;box-shadow:0 3px 10px rgba(214,51,108,.3);z-index:20;
+}
+#topbar .stat{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.26);
+  padding:4px 10px;border-radius:14px;font-size:13px;font-weight:800;white-space:nowrap;}
+#topbar .stat b{font-size:15px;}
+#topbar .sp{flex:1;}
+#topbar .ico{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.28);border:2px solid #fff;
+  display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;flex:0 0 auto;}
+#topbar .ico:active{transform:scale(.9);}
+#timeStat.warn{background:#FF5722;animation:pulse .7s infinite;}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+
+#views{position:relative;overflow:hidden;background:#FFF6EC;}
+.view{position:absolute;top:0;right:0;bottom:0;left:0;display:none;flex-direction:column;overflow:hidden;}
+.view.on{display:flex;}
+
+/* 工位切换条 */
+#tabs{display:flex;background:#fff;box-shadow:0 -3px 12px rgba(0,0,0,.1);z-index:20;}
+.tab{
+  flex:1;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  border:none;background:transparent;font-family:inherit;cursor:pointer;padding:4px 2px;color:#A88A93;font-size:11px;font-weight:700;
+}
+.tab .ti{font-size:19px;line-height:1;}
+.tab.on{color:var(--pink-d);background:#FFF0F5;}
+.tab.on .ti{transform:scale(1.15);}
+.tab .badge{position:absolute;top:3px;right:50%;margin-right:-26px;min-width:17px;height:17px;border-radius:9px;
+  background:#FF3D3D;color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px;}
+
+/* 小票夹 */
+#rail{
+  background:repeating-linear-gradient(90deg,#F3E0CE 0 22px,#EFD9C4 22px 44px);
+  border-top:3px solid #C9A47F;display:flex;align-items:center;gap:8px;padding:6px 10px;overflow-x:auto;overflow-y:hidden;
+}
+#rail::-webkit-scrollbar{height:0;}
+#rail .rail-label{flex:0 0 auto;font-size:11px;font-weight:800;color:#8B6543;writing-mode:vertical-rl;letter-spacing:2px;}
+.tick{
+  flex:0 0 auto;width:66px;height:calc(var(--railH) - 22px);background:#FFFDF5;border-radius:5px;
+  border-left:3px dashed #E7B9CA;box-shadow:0 3px 7px rgba(0,0,0,.18);position:relative;cursor:pointer;
+  padding:4px 5px;font-size:10px;line-height:1.3;overflow:hidden;transform:rotate(-1deg);transition:transform .15s;
+}
+.tick:nth-child(odd){transform:rotate(1.2deg);}
+.tick:active{transform:scale(.94);}
+.tick .tk-no{font-weight:800;color:#A5737F;}
+.tick .tk-em{font-size:19px;text-align:center;line-height:1.15;}
+.tick .tk-st{position:absolute;bottom:2px;left:4px;font-size:9px;font-weight:800;}
+.tick.s-wait{border-left-color:#FFB84D;}
+.tick.s-build{background:#FFF8E0;border-left-color:#F5B841;}
+.tick.s-fin{border-left-color:#7BD1B8;background:#F0FFF9;}
+.tick.s-ready{border-left-color:#5AE06A;background:#F2FFF2;animation:tickGlow 1.1s infinite;}
+@keyframes tickGlow{0%,100%{box-shadow:0 3px 7px rgba(0,0,0,.18)}50%{box-shadow:0 0 0 3px rgba(90,224,106,.55),0 3px 7px rgba(0,0,0,.18)}}
+.tick.serve-need .tk-em{animation:bob .5s infinite;}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+
+/* ============ 前台接单 vOrder ============ */
+.order-scene{flex:1;position:relative;display:flex;flex-direction:column;min-height:0;
+  background:linear-gradient(180deg,#FFF1DE 0%,#FFE0C4 100%);overflow:hidden;}
+.order-sky{position:absolute;top:0;left:0;right:0;height:34%;background:linear-gradient(180deg,#BDE6FF,#E9F6FF);}
+.order-banner{
+  position:relative;margin:6px auto 0;padding:5px 26px;border-radius:12px;
+  background:linear-gradient(#FF9DBB,#FF6B9D);color:#fff;font-weight:900;font-size:16px;letter-spacing:3px;
+  box-shadow:0 4px 0 #D6336C,0 6px 12px rgba(0,0,0,.2);text-align:center;white-space:nowrap;
+}
+.order-banner small{display:block;font-size:9px;letter-spacing:1px;opacity:.85;font-weight:600;}
+.order-queue{
+  position:relative;flex:1;display:flex;align-items:flex-end;justify-content:center;gap:clamp(4px,1.4vw,16px);
+  padding:8px 10px 0;overflow-x:auto;overflow-y:hidden;min-height:0;
+}
+.order-queue::-webkit-scrollbar{height:0;}
+.order-counter{
+  position:relative;flex:0 0 auto;width:100%;height:26px;
+  background:linear-gradient(#D99A64,#B87A46);border-top:4px solid #F4D3A8;
+  box-shadow:0 -4px 12px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.order-counter span{font-size:11px;color:#FFF3E2;font-weight:800;opacity:.85;}
+.cust{
+  position:relative;flex:0 0 auto;width:clamp(62px,9vw,86px);display:flex;flex-direction:column;align-items:center;gap:3px;
+  cursor:pointer;animation:walkIn .5s cubic-bezier(.2,1.4,.5,1);
+}
+@keyframes walkIn{from{transform:translateY(24px) scale(.7);opacity:0}to{transform:none;opacity:1}}
+.cust .cb{width:100%;aspect-ratio:1;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:clamp(28px,5.4vh,44px);box-shadow:0 4px 0 rgba(0,0,0,.13),0 6px 12px rgba(0,0,0,.16);transition:transform .12s;}
+.cust:active .cb{transform:scale(.9);}
+.cust.head .cb{box-shadow:0 0 0 4px #FFD54F,0 0 0 8px rgba(255,213,79,.4),0 6px 12px rgba(0,0,0,.2);animation:headBob 1.1s infinite;}
+@keyframes headBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.cust .nm{font-size:10px;font-weight:800;color:#8B6543;background:#FFF6E6;border-radius:7px;padding:1px 6px;}
+.cust .pb{width:100%;height:6px;border-radius:4px;background:rgba(0,0,0,.14);overflow:hidden;}
+.cust .pf{height:100%;width:100%;border-radius:4px;background:linear-gradient(90deg,#7BD1B8,#49C78D);transition:width .1s linear;}
+.cust .pf.low{background:linear-gradient(90deg,#FFD54F,#FFB300);}
+.cust .pf.crit{background:linear-gradient(90deg,#FF7B6B,#F4351F);}
+.cust.thinking .cb::after{content:"💭";position:absolute;margin-top:-34px;margin-left:26px;font-size:20px;animation:bob .8s infinite;}
+.cust.leaving{animation:walkOut .45s forwards;}
+@keyframes walkOut{to{transform:translateX(-70px) scale(.6);opacity:0}}
+.order-help{flex:0 0 auto;text-align:center;font-size:11px;color:#9A6E52;font-weight:700;padding:5px;background:rgba(255,255,255,.6);}
+.empty-q{display:flex;align-items:center;justify-content:center;height:100%;color:#B08A6C;font-size:13px;font-weight:700;gap:6px;}
+
+/* 顾客说话气泡 */
+.say{
+  position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:6px;
+  background:#fff;border-radius:12px;padding:6px 10px;font-size:12px;font-weight:700;color:#5C4953;
+  box-shadow:0 4px 12px rgba(0,0,0,.2);white-space:nowrap;z-index:5;
+}
+.say::after{content:"";position:absolute;top:100%;left:50%;margin-left:-6px;border:6px solid transparent;border-top-color:#fff;}
+
+/* ============ 工位面板通用 ============ */
+.wb-head{flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:6px 10px;background:#FFF0F5;border-bottom:2px solid #FFD9E4;}
+.wb-title{flex:1;font-size:12px;font-weight:800;color:var(--pink-d);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.wb-body{flex:1;display:flex;min-height:0;position:relative;overflow:hidden;}
+.mini-recipe{flex:0 0 auto;width:clamp(96px,14vw,132px);padding:6px;overflow-y:auto;background:#FFFDF7;border-left:2px dashed #FFD9E4;}
+.mini-recipe::-webkit-scrollbar{width:0;}
+.mini-recipe h5{font-size:10px;color:#A5737F;letter-spacing:1px;margin-bottom:4px;}
+.rc-line{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 4px;border-radius:7px;margin-bottom:3px;background:#FFF3F7;}
+.rc-line.ok{background:#E9FBF2;color:#2E8B62;}
+.rc-line .e{font-size:14px;}
+.pad-area{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;position:relative;}
+.pad-hint{flex:0 0 auto;text-align:center;font-size:11px;color:#9A6E52;font-weight:700;padding:4px;background:rgba(255,255,255,.55);}
+.pad-hint b{color:var(--pink-d);}
+
+/* 材料货架 */
+.shelf{flex:0 0 auto;display:flex;gap:6px;padding:6px 8px;overflow-x:auto;background:linear-gradient(#F7E7D2,#EFDCC4);border-bottom:3px solid #D9B892;}
+.shelf::-webkit-scrollbar{height:0;}
+.shelf .sh-t{flex:0 0 auto;align-self:center;font-size:10px;font-weight:800;color:#8B6543;writing-mode:vertical-rl;letter-spacing:1px;}
+.ing{
+  flex:0 0 auto;min-width:52px;padding:3px 5px;background:#FFFDF7;border-radius:10px;border:2px solid #EFD9C4;
+  border-top-width:3px;display:flex;flex-direction:column;align-items:center;gap:1px;cursor:grab;
+  box-shadow:0 3px 0 #E0C6AC;touch-action:none;
+}
+.ing:active{transform:translateY(2px);box-shadow:0 1px 0 #E0C6AC;}
+.ing .ie{font-size:19px;line-height:1.1;}
+.ing .in{font-size:10px;font-weight:800;color:#7A5340;white-space:nowrap;}
+.ing.sel{border-color:var(--pink);background:#FFF0F5;box-shadow:0 3px 0 var(--pink-l);}
+.ing .kbd{position:absolute;margin:-46px 0 0 34px;font-size:8px;background:#5C4953;color:#fff;border-radius:4px;padding:0 3px;opacity:.55;}
+
+/* 操作台 */
+.pad-stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;min-height:0;overflow:hidden;
+  padding:30px 0 46px;
+  background:radial-gradient(circle at 50% 42%,#FFFFFF 0%,#FFF2E4 60%,#F6E3CF 100%);}
+.drag-ghost{position:fixed;z-index:9999;font-size:38px;pointer-events:none;transform:translate(-50%,-50%) scale(1.15);filter:drop-shadow(0 6px 8px rgba(0,0,0,.3));}
+
+/* 蛋糕叠层台 */
+#cakePad{position:relative;width:190px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:14px;}
+.cake-wrap{position:relative;width:170px;}
+.st-layer{position:absolute;border-radius:7px;transition:transform .18s cubic-bezier(.2,1.5,.5,1);}
+.st-fill{position:absolute;border-radius:3px;opacity:.95;}
+.fcell{position:absolute;border-radius:4px;border:2px dashed #FFC7DA;background:rgba(255,240,246,.55);}
+.fcell.smooth{border:2px solid #FFF0F5;background:#FFF3F7;box-shadow:inset 0 -2px 3px rgba(230,150,180,.35);}
+.st-top{position:absolute;font-size:22px;cursor:grab;touch-action:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2));z-index:3;}
+.st-plate{width:180px;height:11px;border-radius:0 0 12px 12px;background:linear-gradient(#F2F2F2,#D8D8D8);box-shadow:0 4px 8px rgba(0,0,0,.2);position:relative;}
+.st-plate::after{content:"";position:absolute;left:22px;right:22px;bottom:-7px;height:7px;border-radius:0 0 8px 8px;background:#C9C9C9;}
+.frost-bar{position:absolute;top:6px;left:50%;transform:translateX(-50%);background:#fff;border-radius:999px;padding:3px 12px;
+  font-size:12px;font-weight:800;color:#A5737F;box-shadow:0 2px 8px rgba(0,0,0,.14);white-space:nowrap;z-index:6;}
+.frost-bar.done{background:#E9FBF2;color:#2E8B62;}
+
+/* 面包揉面台 */
+#breadPad{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;}
+.dough{width:clamp(90px,17vh,130px);aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle at 35% 32%,#FFF3DC,#EBCE9E 70%,#D9B67F);
+  border:3px solid #C79E69;box-shadow:0 6px 0 #B98F5C,0 10px 18px rgba(0,0,0,.2);cursor:grab;touch-action:none;
+  display:flex;align-items:center;justify-content:center;font-size:30px;position:relative;}
+.dough.puff{animation:pufft .3s;}
+@keyframes pufft{50%{transform:scale(1.06)}}
+.spin-ring{position:absolute;inset:-14px;border-radius:50%;border:3px dashed rgba(255,107,157,.5);opacity:0;}
+.dough.knead .spin-ring{opacity:1;animation:spin 1.1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.oven{
+  width:clamp(150px,30vh,220px);aspect-ratio:1.25;border-radius:16px;
+  background:linear-gradient(#8A8A96,#5F5F6B);border:5px solid #43434D;position:relative;
+  box-shadow:0 8px 0 #35353E,0 12px 20px rgba(0,0,0,.3);padding:12px;
+}
+.oven .door{position:absolute;left:10px;right:10px;bottom:10px;top:38px;background:linear-gradient(#3A3A44,#24242C);
+  border-radius:10px;border:3px solid #6A6A78;display:flex;align-items:center;justify-content:center;font-size:38px;overflow:hidden;}
+.oven .heel{position:absolute;left:8px;top:8px;font-size:12px;color:#FFD9A8;font-weight:800;letter-spacing:1px;}
+.oven .heat{position:absolute;top:0;right:0;bottom:0;left:0;background:radial-gradient(circle at 50% 80%,rgba(255,140,40,.55),transparent 70%);opacity:0;transition:opacity .3s;}
+.oven.hot .heat{opacity:1;}
+.oven .dial{position:absolute;right:8px;top:6px;width:26px;height:26px;border-radius:50%;
+  background:conic-gradient(#FF6B9D 0deg,#FF6B9D var(--dg,0deg),#DDD 0deg);border:2px solid #fff;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,.3);}
+.oven .dial::after{content:"";width:4px;height:9px;background:#fff;border-radius:2px;transform:translateY(-4px);}
+.dough-item.burnt{filter:grayscale(.55) brightness(.55);}
+.progress-ring{position:relative;width:70px;height:70px;}
+.gauge{
+  width:clamp(46px,9vw,66px);flex:0 0 auto;position:relative;background:#FFFDF7;border:3px solid #D9B892;border-radius:14px;
+  height:clamp(110px,20vh,160px);overflow:hidden;box-shadow:inset 0 0 8px rgba(0,0,0,.1);touch-action:none;
+}
+.gauge .fill{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(#FFD98A,#F0A93B);transition:height .06s linear;}
+.gauge .fill.tea{background:linear-gradient(#C58A5B,#8B5A2B);}
+.gauge .fill.milk{background:linear-gradient(#FFF6E0,#F0DFA8);}
+.gauge .zone{position:absolute;left:0;right:0;border-top:2px dashed rgba(46,139,98,.75);border-bottom:2px dashed rgba(46,139,98,.75);
+  background:rgba(90,224,106,.16);}
+.gauge .tick-l{position:absolute;right:2px;font-size:9px;font-weight:800;color:#8B6543;transform:translateY(-50%);}
+.gauge-glow{border-color:#5AE06A;box-shadow:0 0 0 3px rgba(90,224,106,.5),inset 0 0 8px rgba(0,0,0,.1);}
+.cup{
+  width:clamp(60px,12vw,88px);flex:0 0 auto;position:relative;
+  height:clamp(88px,17vh,124px);border:3px solid #E3D6C8;border-top:none;border-radius:6px 6px 22px 22px;
+  background:linear-gradient(#FFFFFF,#F6F1EA);overflow:hidden;touch-action:none;
+}
+.cup .liq{position:absolute;left:0;right:0;bottom:0;transition:height .08s,background .2s;}
+.cup .sea{position:absolute;left:0;right:0;height:6px;background:rgba(255,255,255,.6);}
+.cup .pearl{position:absolute;bottom:6px;width:11px;height:11px;border-radius:50%;background:#3E2C23;box-shadow:inset -1px -2px 0 rgba(255,255,255,.25);}
+.cup .lid{position:absolute;top:-12px;left:-3px;right:-3px;height:14px;background:#B98055;border-radius:5px;opacity:0;transition:.2s;}
+.cup.lidded .lid{opacity:1;}
+.cup .straw{position:absolute;top:-34px;left:52%;width:7px;height:36px;background:#FF6B9D;border-radius:3px;transform:rotate(12deg);opacity:0;transition:.2s;}
+.cup.strawed .straw{opacity:1;}
+.cup.shake{animation:shake .16s infinite;}
+@keyframes shake{0%,100%{transform:translateX(-4px) rotate(-3deg)}50%{transform:translateX(4px) rotate(3deg)}}
+.swipe-hint{font-size:12px;font-weight:800;color:var(--pink-d);background:#FFF0F5;border-radius:10px;padding:5px 12px;animation:bob .9s infinite;}
+
+/* ============ vServe 交付收银 ============ */
+.serve-scene{flex:1;display:flex;min-height:0;background:linear-gradient(180deg,#FFF1DE,#FFE0C4);position:relative;}
+.tray-zone{flex:1;display:flex;flex-direction:column;min-width:0;padding:6px;}
+.tray-title{font-size:11px;font-weight:800;color:#8B6543;padding:2px 4px;display:flex;align-items:center;gap:5px;}
+.tray-row{flex:1;display:flex;flex-wrap:wrap;align-content:flex-start;gap:8px;padding:6px;overflow-y:auto;min-height:0;}
+.tray-card{
+  width:clamp(66px,10vw,88px);background:#fff;border-radius:12px;padding:5px;cursor:pointer;position:relative;
+  box-shadow:0 4px 0 rgba(0,0,0,.12),0 6px 12px rgba(0,0,0,.14);display:flex;flex-direction:column;align-items:center;gap:2px;
+  animation:pop .3s cubic-bezier(.2,1.5,.5,1);border:2px solid #FFD9E4;
+}
+@keyframes pop{from{transform:scale(.5);opacity:0}to{transform:none;opacity:1}}
+.tray-card:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.12);}
+.tray-card .pv{font-size:30px;line-height:1.1;}
+.tray-card .pv svg{width:34px;height:44px;}
+.tray-card .tn{font-size:9px;font-weight:800;color:#A5737F;}
+.tray-card .go{position:absolute;top:-6px;right:-6px;font-size:14px;animation:bob .7s infinite;}
+.cash-panel{
+  flex:0 0 auto;width:clamp(150px,26vw,220px);background:linear-gradient(#FFF9F0,#F6E7D2);border-left:4px solid #D9B892;
+  padding:8px;display:flex;flex-direction:column;gap:5px;overflow-y:auto;
+}
+.cash-panel::-webkit-scrollbar{width:0;}
+.cash-screen{background:#2E2A33;color:#7CFFB2;border-radius:9px;padding:7px 9px;font-family:"Courier New",monospace;font-size:12px;
+  box-shadow:inset 0 2px 8px rgba(0,0,0,.6);min-height:74px;}
+.cash-screen .row{display:flex;justify-content:space-between;line-height:1.5;}
+.cash-screen .hi{color:#FFE97F;}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;}
+.keypad .pkey{padding:7px 0;font-size:17px;}
+.keypad .pkey.wide{grid-column:span 2;}
+.paid-row{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;}
+.rank-line{display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:800;}
+.note-item{background:linear-gradient(#E7F7D9,#C8EDAF);border:2px solid #96D47A;border-radius:9px;padding:4px 8px;
+  font-size:12px;font-weight:800;color:#3B6D11;cursor:pointer;box-shadow:0 3px 0 #96D47A;}
+.note-item:active{transform:translateY(2px);box-shadow:none;}
+.note-item.sel{background:linear-gradient(#FFF0A8,#FFD54F);border-color:#E0A800;box-shadow:0 3px 0 #E0A800;}
+
+/* 小偷 */
+.thief{
+  position:absolute;width:clamp(54px,9vw,74px);cursor:pointer;z-index:40;text-align:center;
+  animation:thiefIn .4s ease-out;
+}
+@keyframes thiefIn{from{transform:translateX(60px);opacity:0}to{transform:none;opacity:1}}
+.thief .tb{font-size:clamp(34px,6.4vh,52px);filter:drop-shadow(0 4px 6px rgba(0,0,0,.3));}
+.thief .tb.hit{animation:hitShake .2s;}
+@keyframes hitShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px) rotate(-8deg)}75%{transform:translateX(7px) rotate(8deg)}}
+.thief .tb.run{animation:runOff .8s forwards;}
+@keyframes runOff{to{transform:translateX(180px);opacity:0}}
+.thief .thp{width:100%;height:6px;background:rgba(0,0,0,.25);border-radius:4px;overflow:hidden;margin-top:2px;}
+.thief .thpf{height:100%;background:#FF3D3D;transition:width .1s;}
+.alarm{
+  position:absolute;top:6px;left:50%;transform:translateX(-50%);z-index:41;
+  background:#FF3D3D;color:#fff;font-weight:900;font-size:13px;padding:5px 16px;border-radius:10px;
+  box-shadow:0 0 0 4px rgba(255,61,61,.35);animation:alarmBlink .45s infinite;white-space:nowrap;
+}
+@keyframes alarmBlink{0%,100%{background:#FF3D3D;box-shadow:0 0 0 4px rgba(255,61,61,.35)}50%{background:#FFD54F;color:#7A4A00;box-shadow:0 0 0 4px rgba(255,213,79,.45)}}
+.counter-cash{position:absolute;left:8px;bottom:8px;background:linear-gradient(#F0F0F0,#D4D4D4);border:3px solid #9E9E9E;
+  border-radius:8px;padding:3px 10px;font-size:11px;font-weight:800;color:#5C4953;display:flex;align-items:center;gap:4px;}
+.counter-cash.robbed{animation:robbedShake .3s infinite;background:#FFDCDC;border-color:#FF3D3D;color:#C00;}
+@keyframes robbedShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+
+/* ============ 家园 ============ */
+#homeScreen{background:linear-gradient(180deg,#EDE4FF,#F7E9F3);}
+.home-top{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(255,255,255,.7);
+  border-bottom:2px solid #E0D2F5;}
+.home-top .ht{flex:1;font-size:16px;font-weight:900;color:#6B4C9A;}
+.home-main{flex:1;display:flex;min-height:0;gap:8px;padding:8px;}
+.room{
+  flex:1;position:relative;border-radius:16px;overflow:hidden;min-height:0;
+  box-shadow:inset 0 0 0 4px rgba(255,255,255,.5),0 8px 20px rgba(0,0,0,.12);
+}
+.room .wall{position:absolute;left:0;right:0;top:0;height:62%;}
+.room .floor{position:absolute;left:0;right:0;bottom:0;height:38%;border-top:3px solid rgba(0,0,0,.12);}
+.deco-slot{position:absolute;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;transition:transform .15s;}
+.deco-slot:active{transform:scale(.9);}
+.deco-slot .d-em{filter:drop-shadow(0 3px 4px rgba(0,0,0,.18));line-height:1;}
+.deco-slot.empty{border:2px dashed rgba(0,0,0,.18);border-radius:12px;background:rgba(255,255,255,.4);min-width:44px;min-height:34px;}
+.deco-slot.empty::after{content:"+";font-size:20px;color:rgba(0,0,0,.28);font-weight:900;}
+.home-side{flex:0 0 auto;width:clamp(150px,26vw,240px);display:flex;flex-direction:column;gap:6px;overflow-y:auto;}
+.home-side::-webkit-scrollbar{width:0;}
+.slot-card{background:#fff;border-radius:12px;padding:7px 9px;box-shadow:0 3px 8px rgba(0,0,0,.1);}
+.slot-card h6{font-size:12px;font-weight:800;color:#6B4C9A;display:flex;align-items:center;gap:4px;}
+.slot-card .opts{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;}
+.opt{border:2px solid #E0D2F5;background:#FBF8FF;border-radius:9px;padding:3px 7px;font-size:11px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;gap:3px;}
+.opt.own{border-color:#9AE6B4;background:#F0FFF5;}
+.opt.eq{border-color:#6B4C9A;background:#EDE4FF;color:#6B4C9A;}
+.opt.no{opacity:.5;}
+.opt:active{transform:scale(.94);}
+
+/* ============ 弹窗 / 提示 ============ */
+.modal-overlay{position:absolute;top:0;right:0;bottom:0;left:0;z-index:200;background:rgba(60,40,50,.55);display:none;
+  align-items:center;justify-content:center;padding:12px;backdrop-filter:blur(2px);}
+.modal-overlay.show{display:flex;}
+.modal-content{
+  background:linear-gradient(#FFFDF9,#FFF4EC);border-radius:20px;padding:16px;text-align:center;
+  max-width:min(620px,94%);width:100%;max-height:92%;overflow-y:auto;
+  box-shadow:0 16px 44px rgba(0,0,0,.35);animation:mIn .24s cubic-bezier(.2,1.3,.5,1);
+}
+@keyframes mIn{from{transform:scale(.85) translateY(14px);opacity:0}to{transform:none;opacity:1}}
+.modal-content::-webkit-scrollbar{width:0;}
+.modal-title{font-size:21px;font-weight:900;color:var(--pink-d);margin-bottom:7px;}
+.modal-text{font-size:13px;line-height:1.7;color:#6B555C;}
+.stars-row{font-size:30px;letter-spacing:5px;margin:6px 0;}
+.stars-row .e{opacity:.25;}
+.modal-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px;}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px;margin:10px 0;}
+.shop-item{background:#fff;border:2px solid #FFD9E4;border-radius:14px;padding:8px;cursor:pointer;transition:transform .1s;}
+.shop-item:active{transform:scale(.96);}
+.shop-item.cant{opacity:.55;filter:grayscale(.4);}
+.shop-item .si-e{font-size:30px;}
+.shop-item .si-n{font-size:13px;font-weight:800;margin-top:2px;}
+.shop-item .si-d{font-size:10px;color:#8B7A80;margin:3px 0;line-height:1.4;}
+.shop-item .si-p{font-size:12px;font-weight:900;color:var(--pink-d);background:#FFF0F5;border-radius:8px;padding:2px;}
+.outfit-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin:10px 0;}
+.outfit-item{background:#fff;border:2px solid #FFD9E4;border-radius:14px;padding:6px;cursor:pointer;}
+.outfit-item.eq{border-color:var(--pink);background:#FFF0F5;box-shadow:0 0 0 3px rgba(255,107,157,.2);}
+.outfit-item .oi-p{height:78px;}
+.outfit-item .oi-n{font-size:11px;font-weight:800;margin-top:2px;}
+.outfit-item .oi-s{font-size:10px;font-weight:800;color:var(--pink-d);}
+.lvl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;margin:10px 0;}
+.lvl-btn{aspect-ratio:1;background:linear-gradient(#FFF,#FFF0F5);border:2px solid #FFD9E4;border-radius:14px;
+  font-family:inherit;font-size:20px;font-weight:900;color:var(--pink-d);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+.lvl-btn:disabled{background:#EEE;color:#BBB;border-color:#DDD;cursor:not-allowed;}
+.lvl-btn .ls{font-size:11px;letter-spacing:1px;}
+.detail-box{background:#FFFDF5;border:2px dashed #E7B9CA;border-radius:14px;padding:10px;margin:8px 0;text-align:left;}
+.detail-box h4{font-size:12px;color:#A5737F;letter-spacing:2px;margin-bottom:5px;}
+.detail-box .d-row{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;padding:4px 2px;border-bottom:1px dotted #F0DCE4;}
+.detail-box .d-row:last-child{border:none;}
+.detail-box .d-row .de{font-size:18px;width:24px;text-align:center;}
+.detail-box .d-row .dq{margin-left:auto;font-size:11px;color:#A5737F;}
+
+/* Toast */
+#toastBox{position:absolute;left:0;right:0;top:calc(var(--topH) + 4px);z-index:300;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;gap:5px;}
+.toast{background:rgba(60,44,50,.9);color:#fff;font-size:13px;font-weight:800;padding:7px 16px;border-radius:999px;
+  animation:tIn .25s;box-shadow:0 4px 14px rgba(0,0,0,.3);max-width:90%;text-align:center;}
+.toast.good{background:linear-gradient(#68D391,#38A169);}
+.toast.bad{background:linear-gradient(#FC8181,#E53E3E);}
+.toast.warn{background:linear-gradient(#F6AD55,#DD6B20);}
+@keyframes tIn{from{transform:translateY(-14px);opacity:0}to{transform:none;opacity:1}}
+
+/* 场景遮罩：倒计时/暂停 */
+.scene-overlay{position:absolute;top:0;right:0;bottom:0;left:0;z-index:250;background:rgba(255,240,246,.9);display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:16px;}
+.scene-overlay.show{display:flex;}
+.cd-num{font-size:78px;font-weight:900;color:var(--pink-d);animation:cdPop .5s;}
+@keyframes cdPop{from{transform:scale(1.7);opacity:0}to{transform:none;opacity:1}}
+.scene-overlay .hint{font-size:14px;font-weight:700;color:#8B7A80;}
+
+/* 教程层 */
+#tutLayer{position:absolute;top:0;right:0;bottom:0;left:0;z-index:280;pointer-events:none;display:none;}
+#tutLayer.on{display:block;}
+#tutLayer .spot{position:absolute;border-radius:16px;box-shadow:0 0 0 3000px rgba(30,12,20,.55),0 0 0 3px #FFD54F inset;
+  animation:spotPulse 1.5s infinite;pointer-events:none;}
+@keyframes spotPulse{0%,100%{box-shadow:0 0 0 3000px rgba(30,12,20,.55),0 0 0 3px #FFD54F inset}
+  50%{box-shadow:0 0 0 3000px rgba(30,12,20,.55),0 0 0 5px #FF6B9D inset}}
+.tut-box{
+  position:absolute;pointer-events:auto;background:linear-gradient(#FFFDF9,#FFF0F5);border:3px solid #FFD54F;
+  border-radius:16px;padding:11px 14px;max-width:min(340px,84%);box-shadow:0 10px 28px rgba(0,0,0,.3);
+  animation:tIn .25s;
+}
+.tut-box .tt{font-size:14px;font-weight:900;color:var(--pink-d);display:flex;align-items:center;gap:6px;}
+.tut-box .tb{font-size:12.5px;line-height:1.7;color:#5C4953;margin-top:4px;}
+.tut-box .tf{margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.tut-box .step{font-size:11px;color:#A5737F;font-weight:800;}
+.tut-box .skip{font-size:11px;color:#A5737F;text-decoration:underline;cursor:pointer;font-weight:700;}
+.tut-box .ok{font-size:12px;padding:5px 14px;}
+#tutLayer .tut-arrow{position:absolute;font-size:24px;line-height:1;pointer-events:none;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));animation:tutBob .8s ease-in-out infinite;z-index:5;}
+@keyframes tutBob{0%,100%{transform:translateY(0)}50%{transform:translateY(7px)}}
+
+/* 特效层 */
+#fxLayer{position:absolute;top:0;right:0;bottom:0;left:0;z-index:290;pointer-events:none;overflow:hidden;}
+.coin-fx{position:absolute;font-size:26px;animation:coinUp 1.1s forwards;}
+@keyframes coinUp{0%{transform:translateY(0) scale(.6);opacity:1}100%{transform:translateY(-90px) scale(1.25);opacity:0}}
+.float-tx{position:absolute;font-size:19px;font-weight:900;animation:coinUp 1.2s forwards;text-shadow:0 2px 5px rgba(0,0,0,.25);}
+.bell-fx{position:absolute;font-size:24px;animation:coinUp 1s forwards;}
+.small-note{font-size:11px;opacity:.75;}
+
+/* 矮屏紧凑 */
+@media (max-height:520px){
+  :root{--topH:44px;--tabH:46px;--railH:66px;--fs:14px;}
+  .tick{width:58px;}
+  .order-banner{padding:3px 18px;font-size:13px;letter-spacing:2px;}
+  .comic-frame{height:min(300px,88%);}
+  #menuChar{height:110px;}
+  .btn{padding:7px 14px;}
+  .ing{min-width:46px;padding:2px 4px;}
+  .ing .ie{font-size:16px;}
+  .dough{width:78px;}
+  .pad-stage{padding:20px 0 38px;}
+  .keypad .pkey{padding:4px 0;font-size:15px;}
+}
+@media (max-width:640px){
+  .mini-recipe{width:88px;}
+  .cash-panel{width:150px;}
+}
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <div id="rotateTip">
+    <div class="ph">📱</div>
+    <div class="tx">请横屏游玩 💛<br><span style="font-size:14px;opacity:.8;font-weight:600">把手机转过来，小店是横着开的～</span></div>
+    <button class="btn" onclick="this.parentNode.style.display='none'">知道了，竖屏也能看</button>
+  </div>
+
+  <!-- ===== 开场漫画 ===== -->
+  <div class="screen" id="comicScreen">
+    <div class="comic-wrap">
+      <div class="comic-frame">
+        <div class="comic-art" id="comicArt"></div>
+        <div class="comic-lines">
+          <div class="who" id="comicWho">林小满</div>
+          <div class="line" id="comicLine"></div>
+        </div>
+      </div>
+    </div>
+    <div class="comic-foot">
+      <div class="comic-dots" id="comicDots"></div>
+      <button class="btn" id="comicNext">继续 ▶</button>
+      <button class="btn secondary sm" id="comicSkip">跳过开场</button>
+    </div>
+  </div>
+
+  <!-- ===== 主菜单 ===== -->
+  <div class="screen" id="menuScreen">
+    <div class="menu-wrap">
+      <div class="menu-title">🍰 甜蜜烘焙屋</div>
+      <div class="menu-sub">大学刚毕业的小满，接手了一间旧铺子</div>
+      <div id="menuChar" onclick="openWardrobe()"></div>
+      <div class="menu-btns">
+        <button class="btn" onclick="quickStart()">▶ 开始营业</button>
+        <button class="btn secondary" onclick="openLevels()">📋 选择关卡</button>
+        <button class="btn secondary" onclick="openHome()">🏠 我的小屋</button>
+        <button class="btn secondary" onclick="openShop()">🛒 道具商店</button>
+        <button class="btn secondary" onclick="resetSave()">🔄 重置存档</button>
+        <button class="btn secondary" onclick="openWardrobe()">👗 店主衣橱</button>
+        <button class="btn secondary" onclick="openTicketBook()">📖 配方图鉴</button>
+        <button class="btn secondary" onclick="replayComic()">🎬 重看开场</button>
+        <button class="btn secondary" onclick="toggleSound(this)">🔊 音效</button>
+      </div>
+      <div class="menu-stats">
+        <span class="chip">💰 金币 <b id="mTotal">0</b></span>
+        <span class="chip">🏆 通关 <b id="mClear">0</b>/10</span>
+        <span class="chip">🔥 最高连击 <b id="mCombo">0</b></span>
+        <span class="chip">🏡 温馨值 <b id="mCozy">0</b></span>
+      </div>
+      <div class="small-note">电脑手机都能玩 · 手机请横屏 · 进度自动保存</div>
+    </div>
+  </div>
+
+  <!-- ===== 家园 ===== -->
+  <div class="screen" id="homeScreen">
+    <div class="home-top">
+      <div class="ht">🏠 我的小屋</div>
+      <div class="chip">💰 <b id="hMoney">0</b></div>
+      <div class="chip">💗 温馨值 <b id="hCozy">0</b></div>
+      <button class="btn secondary sm" id="hBuffBtn">加成</button>
+      <button class="btn secondary sm" onclick="openMenu()">← 返回</button>
+    </div>
+    <div class="home-main">
+      <div class="room" id="roomEl"></div>
+      <div class="home-side" id="homeSide"></div>
+    </div>
+  </div>
+
+  <!-- ===== 游戏 ===== -->
+  <div class="screen" id="gameRoot">
+    <header id="topbar">
+      <div class="stat" id="timeStat"><span>⏰</span><b id="vTime">0</b></div>
+      <div class="stat"><span>💰</span><b id="vMoney">0</b><span style="font-size:10px;font-weight:600">/<span id="vTarget">0</span></span></div>
+      <div class="stat" id="comboStat" style="display:none"><span>🔥</span><b id="vCombo">0</b></div>
+      <div class="sp"></div>
+      <div class="stat" title="我的金币">💎 <b id="vTotal">0</b></div>
+      <div class="stat">📍 <b id="vLevel">1</b></div>
+      <div class="ico" onclick="openTicketBook()" title="全部小票 / 配方">📋</div>
+      <div class="ico" onclick="openBag()" title="道具">🎒</div>
+      <div class="ico sound-toggle" onclick="toggleSound(this)" title="音效">🔊</div>
+      <div class="ico" onclick="togglePause()" id="pauseIco" title="暂停">⏸</div>
+      <div class="ico" onclick="confirmQuit()" title="返回菜单">🏠</div>
+    </header>
+
+    <div id="views">
+      <section class="view" id="vOrder">
+        <div class="order-scene">
+          <div class="order-sky"></div>
+          <div class="order-banner">🍰 甜蜜烘焙屋<small id="orderSub">OPEN · 欢迎光临</small></div>
+          <div class="order-queue" id="custQueue"></div>
+          <div class="order-counter"><span id="orderHint">点击顾客接单 →</span></div>
+        </div>
+      </section>
+
+      <section class="view" id="vBuild">
+        <div class="wb-head">
+          <button class="btn secondary tiny" onclick="openTicketBook()">📋 全部小票</button>
+          <div class="wb-title" id="buildTitle">后厨：选一张小票开工</div>
+          <button class="btn danger tiny" onclick="trashBuild()">🗑 倒掉重来</button>
+        </div>
+        <div class="wb-body" id="buildBody"></div>
+      </section>
+
+      <section class="view" id="vFinish">
+        <div class="wb-head">
+          <button class="btn secondary tiny" onclick="openTicketBook()">📋 全部小票</button>
+          <div class="wb-title" id="finishTitle">精加工：让它变得好看</div>
+          <button class="btn danger tiny" onclick="trashBuild()">🗑 废弃半成品</button>
+        </div>
+        <div class="wb-body" id="finishBody"></div>
+      </section>
+
+      <section class="view" id="vServe">
+        <div class="serve-scene" id="serveScene">
+          <div class="tray-zone">
+            <div class="tray-title">🧺 出餐口 <span class="small-note" id="trayNote">做好的成品会放在这里</span></div>
+            <div class="tray-row" id="trayRow"></div>
+            <div class="counter-cash" id="counterCash">💵 收银机 <b id="registerCash">0</b></div>
+          </div>
+          <div class="cash-panel" id="cashPanel"></div>
+        </div>
+      </section>
+    </div>
+
+    <div id="rail"></div>
+    <nav id="tabs"></nav>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay"></div>
+  <div class="scene-overlay" id="sceneOverlay"></div>
+  <div id="tutLayer"></div>
+  <div id="toastBox"></div>
+  <div id="fxLayer"></div>
+</div>
+
+<script>
+/* ================= 出错兜底：有任何异常都显示在屏幕上，不白屏 ================= */
+function fatal(err){
+  try{
+    const msg = (err && (err.message || err.reason || err.stack)) || String(err);
+    let box = document.getElementById('fatalBox');
+    if(!box){
+      box = document.createElement('div');
+      box.id = 'fatalBox';
+      box.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:9999;'+
+        'background:#D6336C;color:#fff;font:12px/1.6 Consolas,monospace;padding:10px 14px;'+
+        'white-space:pre-wrap;max-height:45vh;overflow:auto;cursor:pointer';
+      box.title = '点击关闭';
+      box.onclick = ()=>{ box.style.display = 'none'; };
+      (document.body || document.documentElement).appendChild(box);
+    }
+    box.style.display = 'block';
+    box.textContent = '⚠️ 游戏出错了，把这段截图发给我就能修：\n' + msg;
+  }catch(e){}
+}
+window.addEventListener('error', function(ev){ fatal(ev.error || ev.message); });
+window.addEventListener('unhandledrejection', function(ev){ fatal(ev.reason); });
+
+/* ================= 基础工具 ================= */
+const SAVE_KEY = 'sweetBakery_v1';
+const $ = id => document.getElementById(id);
+const cl = (v,a,b) => Math.max(a, Math.min(b, v));
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const rint = (a,b) => a + Math.floor(Math.random()*(b-a+1));
+const chance = p => Math.random() < p;
+function mkEl(tag, cls, html){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e; }
+function fx(container, cls, html, x, y){
+  const host = container || $('fxLayer');
+  if(!host) return null;
+  const e = mkEl('div', cls, html);
+  if(typeof x === 'number'){ e.style.left = x+'px'; e.style.top = y+'px'; }
+  else { e.style.left='50%'; e.style.top='46%'; e.style.transform='translate(-50%,-50%)'; }
+  host.appendChild(e); setTimeout(()=>e.remove(), 1300);
+  return e;
+}
+function toast(msg, type){
+  const box = $('toastBox'); if(!box) return;
+  const t = mkEl('div','toast'+(type?' '+type:''), msg);
+  box.appendChild(t);
+  setTimeout(()=>{ t.style.transition='.3s'; t.style.opacity='0'; t.style.transform='translateY(-10px)'; }, 1700);
+  setTimeout(()=>t.remove(), 2100);
+}
+
+/* ================= 音效 ================= */
+let actx = null;
+function audio(){
+  try{
+    if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state === 'suspended') actx.resume();
+  }catch(e){ actx = null; }
+  return actx;
+}
+function tone(f,d,type,vol,delay){
+  if(!state || !state.soundOn) return;
+  const c = audio(); if(!c) return;
+  const t0 = c.currentTime + (delay||0);
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = type||'sine'; o.frequency.setValueAtTime(f,t0);
+  g.gain.setValueAtTime(.0001,t0);
+  g.gain.exponentialRampToValueAtTime(vol||.1, t0+.02);
+  g.gain.exponentialRampToValueAtTime(.0001, t0+d);
+  o.connect(g); g.connect(c.destination);
+  o.start(t0); o.stop(t0+d+.05);
+}
+function noise(dur, vol){
+  if(!state || !state.soundOn) return;
+  const c = audio(); if(!c) return;
+  const len = Math.floor(c.sampleRate*Math.min(.35,dur));
+  const buf = c.createBuffer(1, len, c.sampleRate);
+  const dat = buf.getChannelData(0);
+  for(let i=0;i<len;i++) dat[i] = (Math.random()*2-1) * (1 - i/len);
+  const src = c.createBufferSource(); src.buffer = buf;
+  const g = c.createGain(); g.gain.value = vol||.08;
+  const f = c.createBiquadFilter(); f.type='bandpass'; f.frequency.value=1500;
+  src.connect(f); f.connect(g); g.connect(c.destination); src.start();
+}
+let _ls=0;
+const SFX = {
+  tap:    ()=>tone(700,.07,'triangle',.055),
+  select: ()=>tone(950,.08,'square',.045),
+  plop:   ()=>{ tone(240,.1,'sine',.1); tone(150,.13,'sine',.07,.05); },
+  pop:    ()=>tone(880,.06,'square',.06),
+  coin:   ()=>{ tone(988,.08,'square',.06); tone(1319,.14,'square',.06,.06); },
+  kaching:()=>{ tone(523,.07,'square',.07); tone(784,.07,'square',.07,.08); tone(1047,.22,'triangle',.09,.16); },
+  perfect:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.2,'sine',.11,i*.07)),
+  good:   ()=>[523,659].forEach((f,i)=>tone(f,.16,'sine',.09,i*.07)),
+  bad:    ()=>tone(170,.32,'sawtooth',.08),
+  bell:   ()=>{ tone(1200,.12,'sine',.07); tone(1600,.2,'sine',.05,.08); },
+  lose:   ()=>tone(200,.45,'triangle',.09),
+  win:    ()=>[523,659,784,1047,1319].forEach((f,i)=>tone(f,.28,'sine',.12,i*.1)),
+  tick:   ()=>tone(780,.06,'square',.045),
+  go:     ()=>{ tone(880,.18,'square',.09); tone(1320,.3,'square',.09,.14); },
+  buy:    ()=>{ tone(784,.09,'square',.07); tone(1175,.16,'square',.07,.07); },
+  plop2:  ()=>{ tone(300,.09,'sine',.09); },
+  pour:   ()=>{ const n=Date.now(); if(n-(SFX._p||0)>150){ SFX._p=n; noise(.12,.05); } },
+  knead:  ()=>{ const n=Date.now(); if(n-(SFX._k||0)>160){ SFX._k=n; tone(180+Math.random()*60,.1,'sine',.07); } },
+  swipe:  ()=>{ tone(600+Math.random()*300,.05,'triangle',.04); },
+  alarm:  ()=>{ tone(880,.18,'square',.1); tone(660,.22,'square',.1,.2); },
+  thief:  ()=>{ tone(300,.1,'sawtooth',.08); tone(240,.14,'sawtooth',.08,.1); },
+  spread: ()=>{ const n=Date.now(); if(n-(_ls||0)>90){ _ls=n; tone(520+Math.random()*120,.05,'triangle',.03); } },
+  ding:   ()=>{ tone(1047,.14,'sine',.07); }
+};
+function toggleSound(btn){
+  state.soundOn = !state.soundOn;
+  syncSound();
+  save();
+  if(state.soundOn) SFX.tap();
+}
+function syncSound(){
+  document.querySelectorAll('.sound-toggle').forEach(el=>{
+    if(el.classList.contains('ico')) el.textContent = state.soundOn ? '🔊' : '🔇';
+    else el.textContent = (state.soundOn?'🔊':'🔇') + ' 音效';
+  });
+}
+
+/* ================= 商品数据 ================= */
+const CAKE_F = [
+  {id:'vanilla',   name:'香草',  emoji:'🍰', color:'#FFF4D6', border:'#E8D9A8'},
+  {id:'chocolate', name:'巧克力',emoji:'🍫', color:'#8B4513', border:'#5C2C0A'},
+  {id:'strawberry',name:'草莓',  emoji:'🍓', color:'#FFB3C1', border:'#E07A8E'},
+  {id:'matcha',    name:'抹茶',  emoji:'🍵', color:'#B8D89A', border:'#8AA86A'}
+];
+const CAKE_G = [
+  {id:'cream',     name:'奶油',  emoji:'🥛', color:'#FFF5E6'},
+  {id:'jam',       name:'草莓酱',emoji:'🍯', color:'#FF6B8A'},
+  {id:'choco',     name:'巧酱',  emoji:'🍫', color:'#4A2410'},
+  {id:'fruit',     name:'果粒',  emoji:'🍊', color:'#FFA94D'}
+];
+const CAKE_T = [
+  {id:'strawberry',name:'草莓',  emoji:'🍓'},
+  {id:'cherry',    name:'樱桃',  emoji:'🍒'},
+  {id:'choco',     name:'巧豆',  emoji:'🍫'},
+  {id:'flower',    name:'奶油花',emoji:'🌸'},
+  {id:'none',      name:'不装饰',emoji:'∅'}
+];
+const BREAD_D = [
+  {id:'white', name:'白吐司',emoji:'🍞', color:'#F3DCA8', border:'#D9B87C'},
+  {id:'wheat', name:'全麦',  emoji:'🌾', color:'#C9985C', border:'#9C7038'},
+  {id:'cocoa', name:'可可',  emoji:'🍫', color:'#8A5A3C', border:'#5C3520'}
+];
+const BREAD_A = [
+  {id:'raisin', name:'葡萄干',emoji:'🍇'},
+  {id:'walnut', name:'核桃',  emoji:'🌰'},
+  {id:'cheese', name:'芝士',  emoji:'🧈'},
+  {id:'none',   name:'不加',  emoji:'∅'}
+];
+const BREAD_B = [
+  {id:'light', name:'浅色', emoji:'🌕', pct:42, tint:'#E8C489'},
+  {id:'mid',   name:'适中', emoji:'🌗', pct:64, tint:'#C98A4B'},
+  {id:'dark',  name:'深色', emoji:'🌑', pct:86, tint:'#8A5522'}
+];
+const TEA_B = [
+  {id:'black', name:'红茶',emoji:'🍵', color:'#A0522D'},
+  {id:'green', name:'绿茶',emoji:'🍃', color:'#8FBF6A'},
+  {id:'oolong',name:'乌龙',emoji:'🍂', color:'#C08A3E'}
+];
+const TEA_M = [
+  {id:'none',  name:'不加奶', pct:0,  emoji:'🚫'},
+  {id:'some',  name:'少奶',  pct:30, emoji:'🥛'},
+  {id:'much',  name:'多奶',  pct:62, emoji:'🍼'}
+];
+const TEA_P = [
+  {id:'pearl',  name:'珍珠',emoji:'⚫', color:'#3E2C23'},
+  {id:'coco',   name:'椰果',emoji:'🥥', color:'#FFF3D6'},
+  {id:'pudding',name:'布丁',emoji:'🍮', color:'#FFD98A'},
+  {id:'none',   name:'不加料',emoji:'∅', color:'#000'}
+];
+const TEA_S = [
+  {id:'0', name:'无糖', emoji:'🥄'},
+  {id:'1', name:'微糖', emoji:'🍬'},
+  {id:'2', name:'全糖', emoji:'🍯'}
+];
+
+const PROD = {
+  cake:  {id:'cake',  name:'蛋糕',   emoji:'🍰', base:16, perStep:6},
+  bread: {id:'bread', name:'面包',   emoji:'🥖', base:14, perStep:5},
+  tea:   {id:'tea',   name:'奶茶',   emoji:'🧋', base:12, perStep:4}
+};
+
+/* ================= 关卡 ================= */
+function levelCfg(id){ return LEVELS.find(l=>l.id===id) || LEVELS[0]; }
+const LEVELS = [
+  {id:1, name:'开张这一天',   time:120, target:130, kinds:['cake'],                 complex:1, pat:50, drain:1.00, gap:8.0, maxQ:4, thief:0,    thiefCd:0},
+  {id:2, name:'街坊都知道了', time:120, target:180, kinds:['cake'],                 complex:2, pat:46, drain:1.05, gap:7.2, maxQ:4, thief:0,    thiefCd:0},
+  {id:3, name:'面包香飘出去了',time:130, target:220, kinds:['cake','bread'],         complex:2, pat:42, drain:1.10, gap:6.6, maxQ:5, thief:0,    thiefCd:0},
+  {id:4, name:'学会找零',     time:135, target:280, kinds:['cake','bread'],         complex:2, pat:40, drain:1.12, gap:6.0, maxQ:5, thief:0,    thiefCd:0},
+  {id:5, name:'奶茶上架',     time:145, target:320, kinds:['cake','bread','tea'],   complex:2, pat:38, drain:1.15, gap:5.6, maxQ:6, thief:0,    thiefCd:0},
+  {id:6, name:'小心扒手',     time:150, target:390, kinds:['cake','bread','tea'],   complex:3, pat:36, drain:1.18, gap:5.2, maxQ:6, thief:.07,  thiefCd:30},
+  {id:7, name:'午后高峰',     time:155, target:450, kinds:['cake','bread','tea'],   complex:3, pat:34, drain:1.20, gap:4.8, maxQ:7, thief:.09,  thiefCd:28},
+  {id:8, name:'甜点市集',     time:160, target:560, kinds:['cake','bread','tea'],   complex:3, pat:32, drain:1.25, gap:4.5, maxQ:7, thief:.10,  thiefCd:26},
+  {id:9, name:'全城最忙',     time:165, target:620, kinds:['cake','bread','tea'],   complex:4, pat:30, drain:1.30, gap:4.2, maxQ:8, thief:.12,  thiefCd:24},
+  {id:10,name:'甜蜜大师',     time:175, target:760, kinds:['cake','bread','tea'],   complex:4, pat:28, drain:1.35, gap:4.0, maxQ:8, thief:.13,  thiefCd:22}
+];
+// 关卡越往后，同样的甜品卖得越贵
+function payMult(){ return 1 + 0.22 * ((state.level || 1) - 1); }
+
+/* ================= 道具 / 服装 ================= */
+const ITEMS = [
+  {id:'slow',   name:'慢时钟',   emoji:'⏰', price:200, desc:'本关顾客耐心消耗减半'},
+  {id:'heal',   name:'耐心糖',   emoji:'💚', price:250, desc:'本关所有顾客耐心 +10 秒'},
+  {id:'tipjar', name:'小费罐',   emoji:'🪙', price:300, desc:'每完成一单额外 +$5 小费'},
+  {id:'double', name:'双倍收银', emoji:'💎', price:400, desc:'完美订单收入翻倍'},
+  {id:'bell',   name:'防盗铃',   emoji:'🔔', price:350, desc:'本关不会有小偷上门'}
+];
+const OUTFITS = [
+  {id:'default',name:'新围裙',   price:0,   hat:'chef',    dress:'#FF8FB1', apron:'#FFFDF7', sleeve:'#FFB6C1', shoe:'#E0567F', hair:'#5C4953'},
+  {id:'pink',   name:'粉色蛋糕裙',price:300,hat:'bow',     dress:'#FFC0CB', apron:'#FFF0F5', sleeve:'#FFFFFF', shoe:'#E64A8C', hair:'#7A4A2B'},
+  {id:'chef',   name:'主厨制服', price:500, hat:'tallchef',dress:'#FFFFFF', apron:'#D6336C', sleeve:'#FFFFFF', shoe:'#4A4A4A', hair:'#3A2E2A'},
+  {id:'star',   name:'星星店长', price:600, hat:'star',    dress:'#FFD54F', apron:'#FFFDE7', sleeve:'#FFE082', shoe:'#F57F17', hair:'#C47A3B'},
+  {id:'crown',  name:'皇家店主', price:800, hat:'crown',   dress:'#B39DDB', apron:'#EDE7F6', sleeve:'#D1C4E9', shoe:'#5E35B1', hair:'#4A148C'},
+  {id:'magic',  name:'魔法甜点师',price:1200,hat:'magic',  dress:'#7E57C2', apron:'#B39DDB', sleeve:'#9575CD', shoe:'#311B92', hair:'#311B92'}
+];
+
+/* ================= 家园 ================= */
+const HOME_SLOTS = [
+  {id:'bed',   name:'床',   perk:'每关时间 +4s',     fn:lv=>lv*4,   unit:'s', pos:[5,50,32,30]},
+  {id:'desk',  name:'书桌', perk:'顾客耐心 +2s',      fn:lv=>lv*2,   unit:'s', pos:[62,48,26,26]},
+  {id:'lamp',  name:'台灯', perk:'评分宽容 +4%',      fn:lv=>lv*.04, unit:'%', pos:[43,20,15,18]},
+  {id:'plant', name:'绿植', perk:'每单小费 +$1',      fn:lv=>lv*1,   unit:'$', pos:[85,54,16,20]},
+  {id:'rug',   name:'地毯', perk:'连击加成 +3%',      fn:lv=>lv*.03, unit:'%', pos:[32,74,30,14]},
+  {id:'wall',  name:'墙饰', perk:'顾客到店更快 6%',   fn:lv=>lv*.06, unit:'%', pos:[12,10,22,20]},
+  {id:'pet',   name:'伙伴', perk:'小偷概率 -10%',     fn:lv=>lv*.10, unit:'%', pos:[58,70,15,18]},
+  {id:'window',name:'窗帘', perk:'售价 +3%',          fn:lv=>lv*.03, unit:'%', pos:[76,8,20,20]}
+];
+const HOME_OPTS = [
+  {lv:0, price:0,   em:''},
+  {lv:1, price:260, em:'🛏️'},
+  {lv:2, price:640, em:'✨'},
+  {lv:3, price:1300,em:'👑'}
+];
+const HOME_EMOJI = {
+  bed:['','🛛','🛏️','🛌'], desk:['','🪑','💺','🖥️'], lamp:['','💡','🕯️','🏮'],
+  plant:['','🪴','🌿','🌴'], rug:['','🧶','🟫','🌈'], wall:['','🖼️','🎨','🌟'],
+  pet:['','🐱','🐶','🐼'], window:['','🪟','🌅','🎐']
+};
+
+/* ================= 状态 ================= */
+let state = {
+  level:1, unlocked:1, totalMoney:0, money:0, timeLeft:0, target:0,
+  running:false, paused:false, phase:'idle',
+  custs:[], tickets:[],
+  buildId:null, finishId:null, tray:[],
+  combo:0, maxCombo:0, bestCombo:0, served:0, lost:0, history:[],
+  ownedItems:{}, ownedOutfits:{default:true}, outfit:'default',
+  levelStars:{}, home:{}, buffs:{}, seenTut:{},
+  thief:null, thiefCd:0, registerCash:0, soundOn:true,
+  timers:{}, tutorial:null
+};
+function perkVal(slotId){
+  const lv = state.home[slotId] || 0;
+  const s = HOME_SLOTS.find(x=>x.id===slotId);
+  return s ? s.fn(lv) : 0;
+}
+function perkSum(){ return HOME_SLOTS.reduce((a,s)=>a+(state.home[s.id]||0),0); }
+
+/* ================= 存档 ================= */
+function save(){
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      unlocked:state.unlocked, totalMoney:state.totalMoney, ownedItems:state.ownedItems,
+      ownedOutfits:state.ownedOutfits, outfit:state.outfit, levelStars:state.levelStars,
+      bestCombo:state.bestCombo, home:state.home, seenTut:state.seenTut, soundOn:state.soundOn
+    }));
+  }catch(e){}
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(!raw) return false;
+    const d = JSON.parse(raw);
+    state.unlocked   = d.unlocked || 1;
+    state.totalMoney = d.totalMoney || 0;
+    state.ownedItems = d.ownedItems || {};
+    state.ownedOutfits = d.ownedOutfits || {default:true};
+    state.ownedOutfits.default = true;
+    state.outfit     = d.outfit || 'default';
+    state.levelStars = d.levelStars || {};
+    state.bestCombo  = d.bestCombo || 0;
+    state.home       = d.home || {};
+    state.seenTut    = d.seenTut || {};
+    state.soundOn    = d.soundOn !== false;
+    return true;
+  }catch(e){ return false; }
+}
+function resetSave(){
+  confirmDlg({
+    title:'🔄 重置存档？', text:'金币、关卡星级、家具和服装都会清空，<b>无法恢复</b>。',
+    yes:'确定重置', danger:true,
+    onYes:()=>{ localStorage.removeItem(SAVE_KEY); location.reload(); }
+  });
+}
+
+/* ================= 弹窗 ================= */
+function modal(opts){
+  const ov = $('modalOverlay');
+  ov.innerHTML = '';
+  const c = mkEl('div','modal-content');
+  if(opts.title) c.appendChild(mkEl('div','modal-title',opts.title));
+  if(opts.html)  c.appendChild(mkEl('div','modal-text',opts.html));
+  if(opts.node)  c.appendChild(opts.node);
+  if(opts.stars!=null){
+    c.appendChild(mkEl('div','stars-row',[1,2,3].map(i=>'<span class="'+(i<=opts.stars?'':'e')+'">⭐</span>').join('')));
+  }
+  if(opts.buttons){
+    const row = mkEl('div','modal-btns');
+    opts.buttons.forEach((b,i)=>{
+      const btn = mkEl('button','btn'+(i?' secondary':'')+(b.danger?' danger':''),b.text);
+      btn.onclick = ()=>{ ov.classList.remove('show'); if(b.action) b.action(); };
+      row.appendChild(btn);
+    });
+    c.appendChild(row);
+  }
+  ov.appendChild(c);
+  ov.classList.add('show');
+  return c;
+}
+function closeModal(){ $('modalOverlay').classList.remove('show'); }
+function confirmDlg(o){
+  modal({
+    title:o.title, html:o.text,
+    buttons:[
+      {text:o.no||'取消', action:o.onNo},
+      {text:o.yes||'确定', danger:o.danger, action:o.onYes}
+    ]
+  });
+}
+
+/* ================= 手势引擎 ================= */
+// 通用拖拽：payload + 影子元素
+function bindDrag(el, payload, opts){
+  opts = opts || {};
+  let g = null, sx = 0, sy = 0, moved = false;
+  el.addEventListener('pointerdown', e=>{
+    if(!canPlay()) return;
+    if(e.button != null && e.button !== 0 && e.pointerType === 'mouse') return;
+    e.preventDefault(); e.stopPropagation();
+    sx = e.clientX; sy = e.clientY; moved = false;
+    const move = ev=>{
+      const x = ev.clientX, y = ev.clientY;
+      if(!moved && Math.hypot(x-sx,y-sy) > 6){
+        moved = true;
+        g = mkEl('div','drag-ghost', opts.ghost || payload.ghost || '🍰');
+        document.body.appendChild(g);
+      }
+      if(g){ g.style.left = x+'px'; g.style.top = y+'px'; }
+    };
+    const up = ev=>{
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', up);
+      document.removeEventListener('pointercancel', up);
+      if(g){ g.remove(); g = null; }
+      if(opts.onEnd) opts.onEnd(ev.clientX, ev.clientY, moved);
+    };
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', up);
+    document.addEventListener('pointercancel', up);
+    if(opts.onDown) opts.onDown();
+  });
+}
+// 按住蓄力 / 计时：持续回调
+function bindHold(el, opts){
+  let on = false, t0 = 0, raf = 0;
+  const stop = ()=>{ if(!on) return; on=false; cancelAnimationFrame(raf); if(opts.onEnd) opts.onEnd(); };
+  el.addEventListener('pointerdown', e=>{
+    if(!canPlay()) return;
+    e.preventDefault(); e.stopPropagation();
+    try{ el.setPointerCapture(e.pointerId); }catch(err){}
+    on = true; t0 = performance.now();
+    const loop = ()=>{ if(!on) return; opts.onTick((performance.now()-t0)/1000); raf = requestAnimationFrame(loop); };
+    loop();
+  });
+  el.addEventListener('pointerup', stop);
+  el.addEventListener('pointercancel', stop);
+  el.addEventListener('pointerleave', stop);
+}
+// 涂抹：把画布上的格子按指针半径抹亮
+function bindSmear(el, getCells, onCell, opts){
+  opts = opts || {};
+  let on = false;
+  const at = e=>{
+    if(!on || !canPlay()) return;
+    const r = el.getBoundingClientRect();
+    if(!r.width) return;
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    let did = false;
+    getCells().forEach((c,i)=>{
+      const cx = c.x + c.w/2, cy = c.y + c.h/2;
+      if(Math.hypot(cx-x, cy-y) < (opts.radius||26)){ if(onCell(i)) did = true; }
+    });
+    if(did && opts.onChange) opts.onChange();
+  };
+  el.addEventListener('pointerdown', e=>{
+    if(!canPlay()) return;
+    e.preventDefault();
+    try{ el.setPointerCapture(e.pointerId); }catch(err){}
+    on = true; at(e);
+  });
+  el.addEventListener('pointermove', at);
+  const stop = ()=>{ on = false; };
+  el.addEventListener('pointerup', stop);
+  el.addEventListener('pointercancel', stop);
+  el.addEventListener('pointerleave', stop);
+}
+// 滑动：累计横向来回次数
+function bindSwipe(el, opts){
+  let lastX = null, dir = 0, n = 0;
+  let down = false;
+  el.addEventListener('pointerdown', e=>{
+    if(!canPlay()) return;
+    e.preventDefault(); down = true; lastX = e.clientX;
+    try{ el.setPointerCapture(e.pointerId); }catch(err){}
+  });
+  el.addEventListener('pointermove', e=>{
+    if(!down) return;
+    const dx = e.clientX - lastX;
+    if(Math.abs(dx) < 12) return;
+    const d = dx > 0 ? 1 : -1;
+    if(d !== dir){ dir = d; n++; if(opts.onStep) opts.onStep(n); SFX.swipe(); }
+    lastX = e.clientX;
+  });
+  const up = ()=>{ down = false; };
+  el.addEventListener('pointerup', up);
+  el.addEventListener('pointercancel', up);
+  el.addEventListener('pointerleave', up);
+}
+// 画圈揉面：累计角度
+function bindCircle(el, opts){
+  let ang = null, total = 0, down = false, lastT = 0;
+  el.addEventListener('pointerdown', e=>{
+    if(!canPlay()) return;
+    e.preventDefault(); down = true; ang = null; lastT = performance.now();
+    try{ el.setPointerCapture(e.pointerId); }catch(err){}
+  });
+  el.addEventListener('pointermove', e=>{
+    if(!down) return;
+    const r = el.getBoundingClientRect();
+    const x = e.clientX - (r.left + r.width/2);
+    const y = e.clientY - (r.top + r.height/2);
+    if(Math.hypot(x,y) < r.width * .18) return;
+    const a = Math.atan2(y,x);
+    if(ang !== null){
+      let d = a - ang;
+      while(d >  Math.PI) d -= Math.PI*2;
+      while(d < -Math.PI) d += Math.PI*2;
+      total += d;
+      const now = performance.now();
+      if(now - lastT > 110){
+        lastT = now;
+        const turns = Math.abs(total)/(Math.PI*2);
+        if(opts.onTurn) opts.onTurn(turns);
+        SFX.knead();
+      }
+    }
+    ang = a;
+  });
+  const up = ()=>{ down = false; };
+  el.addEventListener('pointerup', up);
+  el.addEventListener('pointercancel', up);
+  el.addEventListener('pointerleave', up);
+}
+function canPlay(){
+  const ov = $('modalOverlay');
+  return state.running && state.phase==='playing' && !state.paused &&
+         (!ov || !ov.classList.contains('show'));
+}
+
+/* ================= 店主形象 ================= */
+function keeperSVG(o){
+  const skin = '#FFD9B3';
+  const hats = {
+    chef:'<circle cx="49" cy="16" r="7.5" fill="#FFF" stroke="#E8E0D8" stroke-width="1.5"/>'+
+         '<circle cx="60" cy="12" r="8.5" fill="#FFF" stroke="#E8E0D8" stroke-width="1.5"/>'+
+         '<circle cx="71" cy="16" r="7.5" fill="#FFF" stroke="#E8E0D8" stroke-width="1.5"/>'+
+         '<rect x="44" y="14" width="32" height="20" rx="8" fill="#FFF" stroke="#E8E0D8" stroke-width="1.5"/>'+
+         '<rect x="43" y="30" width="34" height="7" rx="3" fill="'+o.apron+'" stroke="#E8E0D8" stroke-width="1"/>',
+    bow:'<polygon points="42,19 58,27 42,35" fill="#FF6B9D"/>'+
+        '<polygon points="78,19 62,27 78,35" fill="#FF6B9D"/>'+
+        '<circle cx="60" cy="27" r="6" fill="#E64A8C"/>',
+    tallchef:'<circle cx="47" cy="9" r="8.5" fill="#FFF" stroke="#E0D8D0" stroke-width="1.5"/>'+
+        '<circle cx="60" cy="6" r="9.5" fill="#FFF" stroke="#E0D8D0" stroke-width="1.5"/>'+
+        '<circle cx="73" cy="9" r="8.5" fill="#FFF" stroke="#E0D8D0" stroke-width="1.5"/>'+
+        '<rect x="41" y="7" width="38" height="28" rx="11" fill="#FFF" stroke="#E0D8D0" stroke-width="1.5"/>'+
+        '<rect x="40" y="30" width="40" height="8" rx="4" fill="#D6336C"/>',
+    star:'<text x="60" y="32" font-size="26" text-anchor="middle">⭐</text>',
+    crown:'<polygon points="44,31 47,12 57,23 60,8 63,23 73,12 76,31" fill="#FFD700" stroke="#DAA520" stroke-width="1.5"/>'+
+        '<circle cx="60" cy="26" r="2.6" fill="#E64A8C"/>',
+    magic:'<polygon points="60,2 44,32 76,32" fill="#5E35B1" stroke="#4527A0" stroke-width="1.5"/>'+
+        '<text x="60" y="24" font-size="12" text-anchor="middle">✨</text>'
+  };
+  const wand = o.id === 'magic' ? '<text x="94" y="134" font-size="15">✨</text>' : '';
+  return '<svg viewBox="0 0 120 210" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet" style="width:100%;height:100%">'+
+    '<ellipse cx="60" cy="203" rx="34" ry="6" fill="rgba(0,0,0,0.12)"/>'+
+    '<g><rect x="82" y="86" width="11" height="36" rx="5.5" fill="'+o.sleeve+'"/>'+
+    '<circle cx="87.5" cy="126" r="6.5" fill="'+skin+'"/>'+wand+'</g>'+
+    '<g><rect x="27" y="86" width="11" height="36" rx="5.5" fill="'+o.sleeve+'"/>'+
+    '<circle cx="32.5" cy="126" r="6.5" fill="'+skin+'"/></g>'+
+    '<rect x="48" y="146" width="9" height="42" rx="4" fill="'+skin+'"/>'+
+    '<rect x="63" y="146" width="9" height="42" rx="4" fill="'+skin+'"/>'+
+    '<ellipse cx="51" cy="192" rx="13" ry="7" fill="'+o.shoe+'"/>'+
+    '<ellipse cx="69" cy="192" rx="13" ry="7" fill="'+o.shoe+'"/>'+
+    '<path d="M38,86 Q60,74 82,86 L97,154 Q60,166 23,154 Z" fill="'+o.dress+'"/>'+
+    '<path d="M46,98 L74,98 L82,150 L38,150 Z" fill="'+o.apron+'" opacity="0.95"/>'+
+    '<rect x="47" y="94" width="26" height="5" rx="2" fill="'+o.apron+'" opacity="0.95"/>'+
+    '<text x="60" y="146" font-size="11" text-anchor="middle">🧁</text>'+
+    '<circle cx="60" cy="52" r="27" fill="'+o.hair+'"/>'+
+    '<circle cx="60" cy="54" r="23" fill="'+skin+'"/>'+
+    '<path d="M37,50 Q42,32 60,32 Q78,32 83,50 Q72,40 60,42 Q48,40 37,50 Z" fill="'+o.hair+'"/>'+
+    '<circle cx="51.5" cy="56" r="3.2" fill="#3A2E2A"/><circle cx="68.5" cy="56" r="3.2" fill="#3A2E2A"/>'+
+    '<circle cx="52.6" cy="55" r="1.1" fill="#fff"/><circle cx="69.6" cy="55" r="1.1" fill="#fff"/>'+
+    '<ellipse cx="44" cy="63" rx="4.5" ry="2.6" fill="#FF9FB2" opacity="0.75"/>'+
+    '<ellipse cx="76" cy="63" rx="4.5" ry="2.6" fill="#FF9FB2" opacity="0.75"/>'+
+    '<path d="M54,64 Q60,70 66,64" stroke="#C0392B" stroke-width="2.2" fill="none" stroke-linecap="round"/>'+
+    (hats[o.hat]||'')+'</svg>';
+}
+function drawKeeper(){
+  const o = OUTFITS.find(x=>x.id===state.outfit) || OUTFITS[0];
+  const h = keeperSVG(o);
+  if($('menuChar')) $('menuChar').innerHTML = h;
+}
+
+/* ================= 开场漫画 ================= */
+const COMIC = [
+  {who:'林小满 · 22 岁 · 应届毕业生', bg:'linear-gradient(180deg,#DCE9F5 0%,#F3E3D3 100%)',
+   items:[['🪟',1.0,22,26],['🛏️',1.2,74,62],['📄',.5,40,52],['📄',.45,48,58],['📄',.4,56,64],['😔',.85,58,42,'filter:drop-shadow(0 3px 4px rgba(0,0,0,.2))']],
+   text:'这是我投出去的第 37 份简历。\n第 37 次，没有回音。'},
+  {who:'那天傍晚', bg:'linear-gradient(180deg,#5B6B7A 0%,#8A94A2 100%)',
+   items:[['☔',1.3,30,22],['🌧️',.5,12,44],['🌧️',.45,20,58],['🌧️',.4,88,40],['🚶‍♀️',1.1,62,58],['📮',.8,86,66]],
+   text:'妈妈说，要不先回家考个编制吧。\n可我真的很想……做点属于自己的东西。'},
+  {who:'整理旧物时', bg:'linear-gradient(180deg,#F6E7D8 0%,#E8D2B8 100%)',
+   items:[['📦',1.1,26,58],['📓',1.0,60,40],['✨',.5,44,26],['✨',.4,76,24],['🌸',.45,72,58]],
+   text:'我翻到了外婆留下的那本旧手账。\n第一页写着：「做甜的人，心要诚，手要稳。」'},
+  {who:'第二天 · 街角', bg:'linear-gradient(180deg,#BFE0FA 0%,#F1E0C6 100%)',
+   items:[['🏚️',1.6,38,50],['🚧',.6,68,58],['🌳',1.1,84,42],['👀',.7,20,30]],
+   text:'然后我在街角看见了它——一间贴着「转让」的小铺子。\n玻璃很脏，招牌歪着，但窗户朝东。'},
+  {who:'签下租约', bg:'linear-gradient(180deg,#FFF0DC 0%,#F3DCC0 100%)',
+   items:[['🐷',1.2,26,44],['💰',.7,52,58],['🪙',.5,64,64],['🪙',.45,70,70],['📝',.9,76,38],['🖊️',.55,86,50]],
+   text:'我把大学四年攒下的 ¥12,380 全倒了出来。\n签下名字那天，手一直在抖。'},
+  {who:'第七天深夜', bg:'linear-gradient(180deg,#3C3B52 0%,#6B5A6E 100%)',
+   items:[['🪣',.9,22,58],['🖌️',.8,40,50],['🔨',.75,58,52],['🍰',.9,74,44],['💡',.7,50,16],['😪',.6,86,60]],
+   text:'一个人刷墙、擦玻璃、把招牌重新拧正。\n凌晨两点，我对着空店笑得像个傻子。'},
+  {who:'开业前夜', bg:'linear-gradient(180deg,#E9D5F0 0%,#F7E6D8 100%)',
+   items:[['🥣',1.0,30,52],['🥖',.9,56,42],['🔥',.8,74,56],['💨',.6,84,30],['😵',.7,46,26]],
+   text:'面揉废了六袋，烤箱糊过两回，糖也放错过三次。\n但我终于做出了像样的东西。'},
+  {who:'开业第一天', bg:'linear-gradient(180deg,#FFE9C7 0%,#FFD3A8 100%)',
+   items:[['🏪',1.5,50,52],['🕐',.8,18,30],['🕓',.7,84,34],['😶',.75,50,22]],
+   text:'从中午站到傍晚，一个客人也没有。\n就在我准备收摊的时候——'},
+  {who:'🔔 叮咚', bg:'linear-gradient(180deg,#FFFBEA 0%,#FFE3B0 100%)',
+   items:[['🚪',1.2,26,50],['🔔',.9,50,22],['🧑',1.0,68,52],['❄️',.5,84,30]],
+   text:'门铃响了。\n他说：「老板，来杯热的，随便什么都行。」'},
+  {who:'甜蜜烘焙屋 · 今天开业', bg:'linear-gradient(180deg,#FFD9E6 0%,#FFF0D8 100%)',
+   items:[['🍰',1.2,30,46],['🥖',.9,50,52],['🧋',1.0,70,46],['😊',.8,50,22],['🎉',.6,16,26],['🎉',.6,84,26]],
+   text:'那一刻我决定了：\n要让每一个推门进来的人，都被甜到。\n——那么，开始营业吧！'}
+];
+let _cp = 0, _tw = null, _typing = false, _twText = '';
+function paintArt(p){
+  let s = '<span style="position:absolute;top:0;right:0;bottom:0;left:0;background:'+p.bg+'"></span>';
+  p.items.forEach(it=>{
+    s += '<span style="position:absolute;left:'+it[2]+'%;top:'+it[3]+'%;font-size:'+it[1]+'em;'+
+         'transform:translate(-50%,-50%);line-height:1;filter:drop-shadow(0 4px 6px rgba(0,0,0,.15));'+
+         (it[4]||'')+'">'+it[0]+'</span>';
+  });
+  return s;
+}
+function typeLine(el, txt, done){
+  if(_tw) clearInterval(_tw);
+  _twText = txt; _typing = true;
+  let i = 0;
+  el.innerHTML = '';
+  _tw = setInterval(()=>{
+    i++;
+    if(i >= txt.length){
+      clearInterval(_tw); _tw = null; _typing = false;
+      el.innerHTML = txt.replace(/\n/g,'<br>');
+      if(done) done();
+    }else{
+      el.innerHTML = txt.slice(0,i).replace(/\n/g,'<br>') + '<span class="cur">▍</span>';
+    }
+  }, 26);
+}
+function renderComic(){
+  const p = COMIC[_cp];
+  $('comicArt').innerHTML = paintArt(p);
+  $('comicWho').textContent = p.who;
+  typeLine($('comicLine'), p.text);
+  const dots = $('comicDots');
+  dots.innerHTML = '';
+  COMIC.forEach((_,i)=>{
+    const d = mkEl('i', i===_cp ? 'now' : (i<_cp?'past':''));
+    dots.appendChild(d);
+  });
+  $('comicNext').textContent = _cp >= COMIC.length-1 ? '🍳 开始营业' : '继续 ▶';
+  SFX.tap();
+}
+function comicNext(){
+  // 打字动画进行中点击：补全本页文字，并且同一次点击就前进（不需要点两下）
+  if(_typing){
+    if(_tw){ clearInterval(_tw); _tw = null; }
+    _typing = false;
+    $('comicLine').innerHTML = _twText.replace(/\n/g,'<br>');
+  }
+  if(_cp >= COMIC.length-1){ showComic(false); state.seenTut.comic = true; save(); openMenu(); return; }
+  _cp++;
+  renderComic();
+}
+function comicPrev(){ if(_cp>0){ _cp--; renderComic(); } }
+function showComic(on){
+  _cp = 0;
+  $('comicScreen').classList.toggle('on', !!on);
+  if(on) renderComic();
+}
+function replayComic(){ _cp = 0; showScreen('comicScreen'); renderComic(); }
+
+/*=====PART_STATION=====*/
+/* ================= 屏幕 & 工位切换 ================= */
+const TABS = [
+  {id:'order', name:'前台接单', emoji:'🛎️'},
+  {id:'build', name:'后厨制作', emoji:'🔥'},
+  {id:'finish',name:'精加工',   emoji:'🎨'},
+  {id:'serve', name:'出餐收银', emoji:'💰'}
+];
+function showScreen(id){
+  ['comicScreen','menuScreen','homeScreen','gameRoot'].forEach(s=>{
+    $(s).classList.toggle('on', s === id);
+  });
+}
+function openMenu(){
+  stopAll();
+  state.running = false; state.phase = 'idle'; state.paused = false;
+  showScreen('menuScreen'); refreshMenu(); closeModal(); hideOverlay();
+}
+function gotoTab(id){
+  if(!state.running) return;
+  state.tab = id;
+  TABS.forEach(t=>{
+    const el = $('tab_'+t.id);
+    if(el) el.classList.toggle('on', t.id === id);
+  });
+  ['order','build','finish','serve'].forEach(v=>{
+    $('v'+v.charAt(0).toUpperCase()+v.slice(1)).classList.toggle('on', v === id);
+  });
+  if(id === 'build')  renderBuild();
+  if(id === 'finish') renderFinish();
+  if(id === 'serve')  renderServe();
+  SFX.tap();
+  renderRail();
+  checkTutorials('go'+id);
+}
+function buildTabs(){
+  const nav = $('tabs'); nav.innerHTML = '';
+  TABS.forEach(t=>{
+    const b = mkEl('button','tab','<span class="ti">'+t.emoji+'</span><span>'+t.name+'</span><span class="badge" style="display:none"></span>');
+    b.id = 'tab_'+t.id;
+    b.onclick = ()=>gotoTab(t.id);
+    nav.appendChild(b);
+  });
+}
+function tabBadge(id, n){
+  const el = $('tab_'+id); if(!el) return;
+  const b = el.querySelector('.badge'); if(!b) return;
+  b.style.display = n ? 'flex' : 'none';
+  b.textContent = n;
+}
+
+/* ================= 顶部状态 ================= */
+function updateTop(){
+  $('vTime').textContent   = Math.max(0, Math.ceil(state.timeLeft));
+  $('vMoney').textContent  = state.money;
+  $('vTarget').textContent = state.target;
+  $('vTotal').textContent  = state.totalMoney;
+  $('vLevel').textContent  = state.level;
+  const cs = $('comboStat');
+  cs.style.display = state.combo >= 2 ? 'flex' : 'none';
+  $('vCombo').textContent = state.combo;
+  $('timeStat').classList.toggle('warn', state.timeLeft <= 15 && state.running);
+  $('registerCash').textContent = state.registerCash;
+  if($('mTotal')){
+    $('mTotal').textContent = state.totalMoney;
+    $('mCombo').textContent = state.bestCombo;
+    $('mClear').textContent = Object.keys(state.levelStars).length;
+    $('mCozy').textContent  = perkSum();
+  }
+  if($('hMoney')) $('hMoney').textContent = state.totalMoney;
+  if($('hCozy'))  $('hCozy').textContent  = perkSum();
+}
+function refreshMenu(){ updateTop(); drawKeeper(); }
+
+/* ================= 订单生成 ================= */
+function genOrder(kind, cx){
+  if(kind === 'cake'){
+    const layers = cx >= 3 ? rint(1,3) : (cx >= 2 ? rint(1,2) : 1);
+    let topping;
+    if(cx <= 1) topping = chance(.55) ? CAKE_T[4] : pick(CAKE_T.slice(0,3));
+    else topping = pick(CAKE_T);
+    return {
+      kind:'cake', layers:layers, flavor:pick(CAKE_F),
+      filling: cx >= 2 ? pick(CAKE_G) : CAKE_G[0],
+      topping: topping
+    };
+  }
+  if(kind === 'bread'){
+    return {
+      kind:'bread', dough:pick(BREAD_D),
+      addin: cx >= 2 ? pick(BREAD_A) : (chance(.5) ? BREAD_A[3] : pick(BREAD_A.slice(0,3))),
+      bake:  cx >= 2 ? pick(BREAD_B) : BREAD_B[1],
+      butter: cx >= 3
+    };
+  }
+  const m = cx >= 2 ? pick(TEA_M) : TEA_M[1];
+  const ap = cx >= 3 ? pick(TEA_P) : pick([TEA_P[0],TEA_P[1],TEA_P[3]]);
+  const cnt = ap.id === 'none' ? 0 : (cx >= 2 ? rint(1,3)*2 : 2);
+  return {
+    kind:'tea', base:pick(TEA_B), milk:m, addin:ap, pearls:cnt,
+    sweet: cx >= 2 ? pick(TEA_S) : TEA_S[1]
+  };
+}
+function ticketPrice(spec){
+  if(spec.kind === 'cake')  return 18 + spec.layers*8;
+  if(spec.kind === 'bread') return 16 + (spec.addin.id!=='none'?4:0) + (spec.bake.id==='dark'?4:0);
+  const mi = TEA_M.findIndex(m=>m.id===spec.milk.id);
+  return 14 + mi*3 + spec.pearls*1.5;
+}
+let _tid = 0, _cid = 0;
+function newTicket(spec, cid){
+  const price = Math.round(ticketPrice(spec) * payMult());
+  const t = {
+    tid:++_tid, no:_tid, cid:cid, spec:spec, price:price,
+    status:'open', wip:emptyWip(spec.kind), startedAt:Date.now()
+  };
+  state.tickets.push(t);
+  return t;
+}
+function emptyWip(kind){
+  if(kind === 'cake')  return {layers:[], filling:null, frost:null, tops:[]};
+  if(kind === 'bread') return {dough:null, knead:0, addin:null, prove:0, bakeVal:0, baking:false, butters:null, packed:false};
+  return {base:null, water:0, milk:0, addin:null, pearls:[], shake:0, sweet:0, sealed:false, straw:false};
+}
+function ticketOf(id){ return state.tickets.find(t=>t.tid===id); }
+function liveTickets(){ return state.tickets.filter(t=>t.status!=='done' && t.status!=='void'); }
+
+/* ================= 顾客 ================= */
+const C_NAMES = ['阿桃','糖糖','果冻','布丁','奶昔','豆豆','可可','糯米','雪梨','奶茶','花卷','大熊','莉莉','小麦','南瓜','柚子'];
+const C_FACES = ['👧','👩','🧒','👵','👨','🧓','👱‍♀️','👲','🧑','👩‍🦰','👨‍🦱','🧕','👼','🤠','👩‍🎤','👨‍🍳'];
+function spawnCustomer(){
+  const L = levelCfg(state.level);
+  if(state.custs.length >= L.maxQ) return null;
+  const pat = L.pat + (state.buffs.heal ? 10 : 0) + perkVal('desk');
+  const c = { cid:++_cid, name:pick(C_NAMES), face:pick(C_FACES), pat:pat, max:pat, taken:false };
+  state.custs.push(c);
+  if(state.tab === 'order') fx($('custQueue'),'bell-fx','🔔');
+  return c;
+}
+function renderQueue(){
+  const q = $('custQueue');
+  if(!q) return;
+  const alive = {};
+  state.custs.forEach(c=>{
+    alive[c.cid] = true;
+    let el = q.querySelector('[data-cid="'+c.cid+'"]');
+    if(!el){
+      el = mkEl('div','cust');
+      el.dataset.cid = c.cid;
+      el.innerHTML = '<div class="cb">'+c.face+'</div><div class="nm">'+c.name+'</div><div class="pb"><div class="pf"></div></div>';
+      el.onclick = ()=>takeOrder(c.cid);
+      q.appendChild(el);
+    }
+    const t = ticketOf2(c.cid);
+    const ready = t && t.status === 'ready';
+    el.classList.toggle('head', ready);
+    el.classList.toggle('thinking', !c.taken);
+  });
+  Array.prototype.slice.call(q.children).forEach(el=>{
+    if(!alive[Number(el.dataset.cid)] && !el.classList.contains('leaving')) el.remove();
+  });
+  const emptyNow = q.querySelector('.empty-q');
+  if(!state.custs.length){ if(!emptyNow) q.appendChild(mkEl('div','empty-q','🕰️ 暂时没有客人，擦擦柜台等等吧')); }
+  else if(emptyNow) emptyNow.remove();
+  updatePatBars();
+  $('orderHint').innerHTML = state.custs.some(c=>!c.taken)
+    ? '👆 点一下还没点单的客人，接下订单'
+    : (state.tickets.some(t=>t.status==='ready') ? '🙋 有成品做好了！去「出餐收银」交给客人' : '☕ 客人在等自己的甜品…');
+}
+function ticketOf2(cid){
+  for(let i=state.tickets.length-1;i>=0;i--){
+    const t = state.tickets[i];
+    if(t.cid === cid && t.status !== 'void' && t.status !== 'done') return t;
+  }
+  return null;
+}
+function updatePatBars(){
+  const q = $('custQueue'); if(!q) return;
+  state.custs.forEach(c=>{
+    const el = q.querySelector('[data-cid="'+c.cid+'"]'); if(!el) return;
+    const f = el.querySelector('.pf'); if(!f) return;
+    const p = Math.max(0, c.pat / c.max * 100);
+    f.style.width = p + '%';
+    f.className = 'pf' + (p < 28 ? ' crit' : (p < 55 ? ' low' : ''));
+  });
+}
+function takeOrder(cid){
+  if(!canPlay()) return;
+  const c = state.custs.find(x=>x.cid===cid);
+  if(!c || c.taken) return;
+  const L = levelCfg(state.level);
+  const kind = pick(L.kinds);
+  const spec = genOrder(kind, L.complex);
+  const t = newTicket(spec, cid);
+  c.taken = true;
+  SFX.ding(); SFX.select();
+  sayTo(cid, orderLines(spec).slice(0,2).map(x=>x[1]).join(' · '));
+  toast('🧾 接下订单 #'+t.no+'（'+PROD[kind].name+' $'+t.price+'）→ 去「🔥 后厨制作」开工');
+  checkTutorials('takeorder');
+  renderQueue(); renderRail();
+  // 后厨空着就先把小票放上台面（不自动切工位，交给玩家自己走过去）
+  setTimeout(()=>{
+    if(!state.running) return;
+    if(!state.buildId) loadBuild(t.tid); else renderRail();
+  }, 500);
+}
+function sayTo(cid, txt){
+  const q = $('custQueue'); if(!q) return;
+  const el = q.querySelector('[data-cid="'+cid+'"]'); if(!el) return;
+  const s = mkEl('div','say', '🗣 '+txt);
+  el.appendChild(s);
+  setTimeout(()=>s.remove(), 2600);
+}
+function orderLines(spec){
+  if(spec.kind === 'cake'){
+    return [
+      ['🍰', spec.flavor.emoji+' '+spec.flavor.name+'口味'],
+      ['📶', spec.layers + ' 层'],
+      ['🥄', '夹心：'+spec.filling.name],
+      ['🌸', spec.topping.id==='none' ? '不要装饰' : '装饰：'+spec.topping.name]
+    ];
+  }
+  if(spec.kind === 'bread'){
+    return [
+      ['🥖', spec.dough.name+'面团'],
+      ['🍇', spec.addin.id==='none' ? '不用加料' : '加料：'+spec.addin.name],
+      ['🔥', '烘烤：'+spec.bake.name],
+      ['🧈', spec.butter ? '要刷一层黄油' : '不用刷酱']
+    ];
+  }
+  return [
+    ['🍵', spec.base.name+'茶底'],
+    ['🥛', spec.milk.name],
+    ['⚫', spec.addin.id==='none' ? '不用加料' : spec.addin.name+' ×'+spec.pearls],
+    ['🍬', spec.sweet.name]
+  ];
+}
+function dropCustomer(c, angry){
+  const q = $('custQueue');
+  const el = q && q.querySelector('[data-cid="'+c.cid+'"]');
+  if(el){ el.classList.add('leaving'); setTimeout(()=>el.remove(), 460); }
+  const t = state.tickets.find(x=>x.cid===c.cid && x.status!=='done' && x.status!=='void');
+  if(t){
+    t.status = 'void';
+    if(state.buildId === t.tid) state.buildId = null;
+    if(state.finishId === t.tid) state.finishId = null;
+    state.tray = state.tray.filter(x=>x.tid !== t.tid);
+  }
+  state.custs = state.custs.filter(x=>x.cid !== c.cid);
+  state.lost++; state.combo = 0;
+  const pen = 6;
+  state.money = Math.max(0, state.money - pen);
+  state.totalMoney = Math.max(0, state.totalMoney - pen);
+  SFX.lose();
+  toast('😡 '+c.name+' 等不及走了 −$'+pen, 'bad');
+  fx(null,'float-tx','😡');
+  updateTop(); renderRail();
+  if(state.tab==='serve') renderServe();
+  setTimeout(renderQueue, 220);
+}
+
+/* ================= 小票夹 ================= */
+function renderRail(){
+  const rail = $('rail'); if(!rail) return;
+  const live = liveTickets();
+  rail.innerHTML = '<span class="rail-label">🧾 小票夹</span>';
+  if(!live.length) rail.appendChild(mkEl('div','small-note','还没有订单，去前台接单吧～'));
+  live.forEach(t=>{
+    const cls = t.status === 'open' ? 's-wait' : t.status === 'build' ? 's-build'
+              : (t.status==='finish'||t.status==='finishW') ? 's-fin' : 's-ready';
+    const st = t.status === 'open' ? '待开工' : t.status === 'build' ? '制作中'
+             : (t.status==='finish'||t.status==='finishW') ? '待加工' : '可出餐';
+    const el = mkEl('div','tick '+cls,
+      '<div class="tk-no">#'+t.no+'</div>'+
+      '<div class="tk-em">'+PROD[t.spec.kind].emoji+'</div>'+
+      '<div class="tk-st" style="color:'+(t.status==='ready'?'#2E8B62':'#A5737F')+'">'+st+'</div>');
+    el.onclick = ()=>openTicket(t.tid);
+    rail.appendChild(el);
+  });
+  tabBadge('build',  liveTickets().filter(t=>t.status==='open').length);
+  tabBadge('finish', liveTickets().filter(t=>t.status==='finish').length);
+  tabBadge('serve',  liveTickets().filter(t=>t.status==='ready').length);
+  updateTop();
+}
+function openTicket(tid){
+  const t = ticketOf(tid); if(!t) return;
+  const canJump = state.running;
+  const kind = PROD[t.spec.kind];
+  const box = mkEl('div','detail-box');
+  box.innerHTML = '<h4>🧾 订单 #'+t.no+' · '+kind.name+'</h4>' +
+    orderLines(t.spec).map(l=>'<div class="d-row"><span class="de">'+l[0]+'</span><span>'+l[1]+'</span></div>').join('') +
+    '<div class="d-row"><span class="de">💵</span><span>这批做对了能收</span><span class="dq">$'+t.price+'</span></div>';
+  const buttons = [];
+  if(canJump){
+    if(t.status === 'open')          buttons.push({text:'🔥 拿到后厨开工', action:()=>{ gotoTab('build'); loadBuild(t.tid); }});
+    else if(t.status === 'build')    buttons.push({text:'🔥 回到后厨', action:()=>gotoTab('build')});
+    else if(t.status === 'finish')   buttons.push({text:'🎨 拿到加工台', action:()=>{ gotoTab('finish'); loadFinish(t.tid); }});
+    else if(t.status === 'finishW')  buttons.push({text:'🎨 回到加工台', action:()=>gotoTab('finish')});
+    else if(t.status === 'ready')    buttons.push({text:'💰 去出餐', action:()=>gotoTab('serve')});
+  }
+  buttons.push({text:'关闭'});
+  modal({
+    title:'📋 顾客写下的小票',
+    html:'<span class="small-note">随时点小票夹上的纸片都能再打开</span>',
+    node:box, buttons:buttons
+  });
+}
+function openTicketBook(){
+  const open = liveTickets();
+  if(!open.length){
+    modal({title:'📖 小票夹是空的', html:'到「前台接单」点一下客人就能拿到新订单。<br><span class="small-note">小票会一直挂在这里，点开就能看完整需求。</span>',
+      buttons:[{text:'知道啦'}]});
+    return;
+  }
+  const box = mkEl('div');
+  open.forEach(t=>{
+    const kind = PROD[t.spec.kind];
+    const stMap = {open:'⏳ 待开工', build:'🔥 制作中', finish:'🎨 待加工', finishW:'🎨 加工中', ready:'✅ 可出餐'};
+    const row = mkEl('div','detail-box');
+    row.innerHTML = '<h4>#'+t.no+' · '+kind.name+' · '+stMap[t.status]+'</h4>' +
+      orderLines(t.spec).map(l=>'<div class="d-row"><span class="de">'+l[0]+'</span><span>'+l[1]+'</span></div>').join('');
+    row.style.cursor = 'pointer';
+    row.onclick = ()=>{ closeModal(); openTicket(t.tid); };
+    box.appendChild(row);
+  });
+  modal({title:'📖 全部小票', html:bookHelp(), node:box, buttons:[{text:'关闭'}]});
+}
+function bookHelp(){
+  return '<span class="small-note">🍰 蛋糕：叠胚 → 夹心 → 抹面 → 摆装饰　　　🥖 面包：和面 → 加料 → 发酵 → 烘烤 → 刷酱 → 装袋<br>' +
+         '🧋 奶茶：茶底 → 注水 → 加奶 → 加料 → 加糖 → 摇匀 → 封口</span>';
+}
+
+/* ================= 关卡 ================= */
+function startLevel(id){
+  const L = levelCfg(id);
+  stopAll();
+  state.level = id;
+  state.money = 0;
+  state.timeLeft = L.time + perkVal('bed');
+  state.target = L.target;
+  state.custs = []; state.tickets = []; state.tray = [];
+  state.buildId = null; state.finishId = null;
+  state.combo = 0; state.maxCombo = 0; state.served = 0; state.lost = 0;
+  state.history = []; state.thief = null; state.registerCash = 0;
+  state.paused = false; state.phase = 'countdown'; state.running = true;
+  state.buffs = {};
+  closeModal(); clearThief(true);
+  showScreen('gameRoot');
+  buildTabs();
+  state.tab = null;
+  gotoTab('order');
+  renderQueue(); renderRail(); updateTop();
+  countdown(()=>{
+    state.phase = 'playing';
+    const first = Math.min(2, L.maxQ);
+    for(let i=0;i<first;i++) spawnCustomer();
+    renderQueue(); SFX.bell();
+    startTimers();
+    checkTutorials('start');
+  });
+  const boost = Object.keys(state.ownedItems).filter(k=>state.ownedItems[k]>0);
+  if(boost.length) setTimeout(()=>maybeItem(()=>{}), 80);
+}
+function startTimers(){
+  clearInterval(state.timers.main);
+  let lastTick = -1;
+  state.timers.main = setInterval(()=>{
+    if(state.paused || state.phase !== 'playing') return;
+    // 教程进行中：营业时间同样冻结，玩家慢慢学
+    if(!state.tutorial) state.timeLeft -= .1;
+    if(state.timeLeft <= 0){ state.timeLeft = 0; updateTop(); endLevel(false); return; }
+    const s = Math.ceil(state.timeLeft);
+    if(s <= 10 && s !== lastTick){ lastTick = s; SFX.tick(); }
+    updateTop();
+  }, 100);
+  clearInterval(state.timers.cust);
+  state.timers.cust = setInterval(()=>{
+    if(state.paused || state.phase !== 'playing') return;
+    const L = levelCfg(state.level);
+    const drain = (state.buffs.slow ? .5 : 1) * L.drain;
+    const gone = [];
+    // 教程进行中：冻结顾客耐心（不扣、不气走）
+    state.custs.forEach(c=>{ if(!state.tutorial) c.pat -= .1 * drain; if(c.pat <= 0) gone.push(c); });
+    gone.forEach(c=>dropCustomer(c));
+    updatePatBars();
+    maybeThief(L);
+  }, 100);
+  clearInterval(state.timers.spawn);
+  state.timers.spawn = setInterval(()=>{
+    if(state.paused || state.phase !== 'playing') return;
+    if(spawnCustomer()){ renderQueue(); SFX.bell(); }
+  }, Math.max(1200, levelCfg(state.level).gap * 1000 * (1 - Math.min(.5, perkVal('wall')))));
+}
+function stopAll(){
+  clearInterval(state.timers.main); clearInterval(state.timers.cust);
+  clearInterval(state.timers.spawn); clearTimeout(state.timers.cd);
+  clearTimeout(state.timers.thiefT);
+  state.timers = {};
+}
+function countdown(done){
+  const ov = $('sceneOverlay');
+  ov.innerHTML = '';
+  ov.classList.add('show');
+  let n = 3;
+  const step = ()=>{
+    if(!state.running){ ov.classList.remove('show'); return; }
+    if(n > 0){
+      ov.innerHTML = '<div class="cd-num">'+n+'</div><div class="hint">准备开工…</div>';
+      SFX.tick(); n--;
+      state.timers.cd = setTimeout(step, 700);
+    }else{
+      ov.innerHTML = '<div class="cd-num" style="font-size:74px">GO!</div>';
+      SFX.go();
+      state.timers.cd = setTimeout(()=>{ ov.classList.remove('show'); if(done) done(); }, 520);
+    }
+  };
+  step();
+}
+function hideOverlay(){ $('sceneOverlay').classList.remove('show'); }
+let autoPauseOff = false;
+function autoPause(){ if(state.running && state.phase==='playing' && !state.paused){ togglePause(); autoPauseOff = true; } }
+function closeAutoPanel(){ closeModal(); if(autoPauseOff && state.paused){ autoPauseOff = false; togglePause(); } }
+function togglePause(){
+  if(!state.running || (state.phase !== 'playing' && !state.paused)) return;
+  state.paused = !state.paused;
+  const ov = $('sceneOverlay');
+  if(state.paused){
+    ov.innerHTML = '';
+    ov.classList.add('show');
+    ov.appendChild(mkEl('div','cd-num','⏸'));
+    ov.appendChild(mkEl('div','hint','已暂停 · 计时和客人的耐心都停住了'));
+    const row = mkEl('div','modal-btns');
+    const b1 = mkEl('button','btn','▶ 继续营业'); b1.onclick = togglePause;
+    const b2 = mkEl('button','btn secondary','🏠 返回菜单'); b2.onclick = ()=>{ autoPauseOff=false; openMenu(); };
+    row.appendChild(b1); row.appendChild(b2);
+    ov.appendChild(row);
+    $('pauseIco').textContent = '▶';
+  }else{
+    ov.classList.remove('show');
+    $('pauseIco').textContent = '⏸';
+  }
+  SFX.tap();
+}
+function confirmQuit(){
+  if(!state.running){ openMenu(); return; }
+  autoPause();
+  confirmDlg({
+    title:'🏠 收工回菜单？', text:'本关进度会作废，<b>已经赚到的金币照常保留</b>。',
+    yes:'收工', no:'继续营业',
+    onYes:()=>{ autoPauseOff=false; openMenu(); },
+    onNo:()=>closeAutoPanel()
+  });
+}
+function endLevel(win){
+  state.running = false; state.phase = 'over';
+  stopAll(); hideOverlay(); clearThief(true);
+  const total = state.served;
+  const perfect = state.history.filter(h=>h.pct >= .95).length;
+  const avg = total ? Math.round(state.history.reduce((a,h)=>a+h.pct,0)/total*100) : 0;
+  const line = '服务 <b>'+total+'</b> 位 · 完美 <b>'+perfect+'</b> 单 · 平均得分 <b>'+avg+'%</b><br>' +
+               '🔥 最高连击 '+state.maxCombo+' · 😡 流失 '+state.lost+' 位';
+  if(win){
+    SFX.win();
+    const stars = calculateStars();
+    const prev = state.levelStars[state.level] || 0;
+    if(stars > prev) state.levelStars[state.level] = stars;
+    if(state.level >= state.unlocked && state.level < LEVELS.length) state.unlocked = state.level + 1;
+    save();
+    const nextId = state.level + 1;
+    const unlockMsg = unlockNote(nextId);
+    modal({
+      title:'🎉 今日营业额达成！',
+      html:'收入 <b>$'+state.money+'</b> / 目标 <b>$'+state.target+'</b><br>'+line+
+           (unlockMsg ? '<br><br><span style="color:#D6336C;font-weight:800">'+unlockMsg+'</span>' : ''),
+      stars:stars,
+      buttons: nextId <= LEVELS.length ? [
+        {text:'▶ 进入第 '+nextId+' 关', action:()=>maybeItem(()=>startLevel(nextId))},
+        {text:'🔄 再玩一次', action:()=>maybeItem(()=>startLevel(state.level))},
+        {text:'🏠 回菜单', action:openMenu}
+      ] : [{text:'🏠 回菜单', action:openMenu}]
+    });
+  }else{
+    SFX.lose(); save();
+    modal({
+      title:'⏰ 打烊啦',
+      html:'今天只赚到 <b>$'+state.money+'</b>，还差 <b>$'+(state.target-state.money)+'</b><br>'+line+
+           '<br><span class="small-note">小提示：先接单再动手，手上的半成品做完就立刻交出去，别让客人干等。</span>',
+      buttons:[
+        {text:'🔄 再试一次', action:()=>maybeItem(()=>startLevel(state.level))},
+        {text:'🏠 回菜单', action:openMenu}
+      ]
+    });
+  }
+}
+function calculateStars(){
+  const total = state.history.length;
+  if(!total) return 1;
+  const avg = state.history.reduce((a,h)=>a+h.pct,0) / total;
+  const perfect = state.history.filter(h=>h.pct>=.95).length;
+  if(avg >= .9 && perfect >= Math.max(2, Math.ceil(total*.6))) return 3;
+  if(avg >= .65) return 2;
+  return 1;
+}
+function unlockNote(nextId){
+  if(nextId > LEVELS.length) return '';
+  const L = levelCfg(nextId), prev = levelCfg(nextId-1);
+  const notes = [];
+  (L.kinds||[]).forEach(k=>{ if(!prev.kinds.includes(k)) notes.push('🥳 解锁新品类：'+PROD[k].name); });
+  if(nextId === 4) notes.push('💵 新玩法：自己收钱找零');
+  if(nextId === 6) notes.push('🥷 当心：小偷开始出没了');
+  return notes.join('　/　');
+}
+function maybeItem(then){
+  const ids = Object.keys(state.ownedItems).filter(k=>state.ownedItems[k] > 0);
+  if(!ids.length){ if(then) then(); return; }
+  const box = mkEl('div','shop-grid');
+  ITEMS.forEach(it=>{
+    const own = state.ownedItems[it.id] || 0;
+    if(!own) return;
+    const d = mkEl('div','shop-item','<div class="si-e">'+it.emoji+'</div><div class="si-n">'+it.name+' <small>×'+own+'</small></div>'+
+      '<div class="si-d">'+it.desc+'</div><div class="si-p">用掉一个</div>');
+    d.onclick = ()=>{
+      applyBuff(it.id);
+      state.ownedItems[it.id]--;
+      if(state.ownedItems[it.id] <= 0) delete state.ownedItems[it.id];
+      save(); closeModal(); if(then) then();
+    };
+    box.appendChild(d);
+  });
+  modal({title:'🎒 要带个道具上班吗？', html:'选一个在本关生效（库存有限，用完就没了）',
+    node:box, buttons:[{text:'⏭ 不用了', action:then}]});
+}
+function applyBuff(id){
+  if(id === 'heal') state.custs.forEach(c=>{ c.pat += 10; c.max += 10; });
+  state.buffs[id] = true;
+  const it = ITEMS.find(x=>x.id===id);
+  toast(it.emoji+' '+it.name+' 已生效','good');
+  SFX.buy(); updateTop();
+}
+function openBag(){
+  autoPause();
+  const box = mkEl('div','shop-grid');
+  ITEMS.forEach(it=>{
+    const own = state.ownedItems[it.id] || 0;
+    const can = state.totalMoney >= it.price;
+    const d = mkEl('div','shop-item'+(can?'':' cant'),
+      '<div class="si-e">'+it.emoji+'</div><div class="si-n">'+it.name+(own?' <small>×'+own+'</small>':'')+'</div>'+
+      '<div class="si-d">'+it.desc+'</div><div class="si-p">'+(can?'立刻买下 $'+it.price:'金币不足 $'+it.price)+'</div>');
+    d.onclick = ()=>{
+      if(!can){ toast('金币不足','bad'); SFX.tap(); return; }
+      state.totalMoney -= it.price;
+      state.ownedItems[it.id] = own + 1;
+      save(); SFX.buy(); toast('买下 '+it.name,'good'); updateTop();
+      closeAutoPanel(); if(state.running) setTimeout(openBag, 40);
+    };
+    box.appendChild(d);
+  });
+  modal({
+    title:'🎒 道具口袋',
+    html:'💰 我的金币 <b>$'+state.totalMoney+'</b>　|　下一关开始时会问你要不要带上' +
+         (Object.keys(state.buffs).length ? '<br><span class="tag">本关已生效</span> '+Object.keys(state.buffs).map(k=>ITEMS.find(x=>x.id===k).emoji+ITEMS.find(x=>x.id===k).name).join('　') : ''),
+    node:box, buttons:[{text:'关闭', action:closeAutoPanel}]
+  });
+}
+function openLevels(){
+  const grid = mkEl('div','lvl-grid');
+  LEVELS.forEach(L=>{
+    const un = L.id <= state.unlocked;
+    const st = state.levelStars[L.id] || 0;
+    const b = mkEl('button','lvl-btn', (un?L.id:'🔒')+'<span class="ls">'+'⭐'.repeat(st)+'☆'.repeat(3-st)+'</span>');
+    b.disabled = !un;
+    b.title = un ? (L.name+' · 目标 $'+L.target+' · '+L.kinds.map(k=>PROD[k].name).join('/')) : '还没解锁';
+    b.onclick = ()=>{ closeModal(); maybeItem(()=>startLevel(L.id)); };
+    grid.appendChild(b);
+  });
+  modal({title:'📋 选择关卡', html:'通关后解锁下一关，星级越高说明做得越标准', node:grid, buttons:[{text:'关闭'}]});
+}
+function quickStart(){
+  const next = Math.min(state.unlocked || 1, LEVELS.length);
+  maybeItem(()=>startLevel(next));
+}
+/* ================= 成品预渲染 ================= */
+function cakeLayers(t){
+  return t.wip.layers.map(l=>CAKE_F.find(f=>f.id===l)).filter(Boolean);
+}
+function madeSVG(t, size){
+  if(t.spec.kind === 'cake'){
+    const ls = cakeLayers(t);
+    const n = ls.length || 1;
+    let s = '<svg viewBox="0 0 100 120" style="width:'+(size||34)+'px;height:auto">';
+    for(let i=0;i<n;i++){
+      const f = ls[i] || CAKE_F[0];
+      const w = 76 - i*8, x = (100-w)/2, y = 96 - (n-i)*20;
+      s += '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="20" rx="5" fill="'+f.color+'" stroke="'+f.border+'" stroke-width="2"/>';
+      if(t.wip.filling && i < n-1){
+        const g = CAKE_G.find(x2=>x2.id===t.wip.filling) || CAKE_G[0];
+        s += '<rect x="'+(x+5)+'" y="'+(y-2)+'" width="'+(w-10)+'" height="4" rx="2" fill="'+g.color+'"/>';
+      }
+    }
+    const covered = frostPct(t) >= .999;
+    if(covered) s += '<rect x="14" y="'+(96-n*20)+'" width="72" height="'+(n*20)+'" rx="8" fill="none" stroke="#FFF0F5" stroke-width="2" opacity=".9"/>';
+    (t.wip.tops||[]).slice(0,5).forEach((tp,i)=>{
+      s += '<text x="'+(30+i*10)+'" y="'+(96-n*20-2)+'" font-size="13" text-anchor="middle">'+(CAKE_T.find(x3=>x3.id===tp.type)||CAKE_T[0]).emoji+'</text>';
+    });
+    s += '<ellipse cx="50" cy="104" rx="42" ry="7" fill="#E9E0D8"/>';
+    return s+'</svg>';
+  }
+  if(t.spec.kind === 'bread'){
+    const d = t.wip.dough ? BREAD_D.find(x4=>x4.id===t.wip.dough) : null;
+    const bk = t.wip.bakeVal || 0;
+    const col = (d ? d.color : '#D9B67F');
+    let s = '<svg viewBox="0 0 100 120" style="width:'+(size||34)+'px;height:auto">';
+    s += '<ellipse cx="50" cy="106" rx="40" ry="6" fill="#E4D3BE"/>';
+    s += '<path d="M16,96 Q14,52 50,48 Q86,52 84,96 Q50,104 16,96 Z" fill="'+col+'" stroke="'+((d&&d.border)||'#C79E69')+'" stroke-width="2.5"/>';
+    s += '<path d="M26,60 Q34,54 44,60" stroke="#fff" stroke-width="2.5" fill="none" opacity=".5"/>';
+    s += '<path d="M52,72 Q62,66 72,72" stroke="#fff" stroke-width="2.5" fill="none" opacity=".5"/>';
+    if(t.wip.addin && t.wip.addin !== 'none'){
+      const a = BREAD_A.find(x5=>x5.id===t.wip.addin) || BREAD_A[0];
+      [26,44,62].forEach(px=>{ s += '<text x="'+px+'" y="86" font-size="10">'+a.emoji+'</text>'; });
+    }
+    if(bk) s += '<text x="50" y="42" font-size="14" text-anchor="middle">'+((BREAD_B.find(x6=>x6.id===t.wip.bakeTarget)||BREAD_B[1]).emoji)+'</text>';
+    if(t.wip.packed) s += '<rect x="12" y="46" width="76" height="58" rx="6" fill="#F6E7D2" stroke="#D9B892" stroke-width="2"/><text x="50" y="80" font-size="14" text-anchor="middle">🏷️</text>';
+    return s+'</svg>';
+  }
+  const base = t.wip.base ? TEA_B.find(x7=>x7.id===t.wip.base) : null;
+  const mi = Math.round((t.wip.milk||0)/100*46);
+  let s = '<svg viewBox="0 0 100 120" style="width:'+(size||34)+'px;height:auto">';
+  s += '<path d="M22,40 L28,108 Q50,116 72,108 L78,40 Z" fill="#FFFFFF" stroke="#E3D6C8" stroke-width="2.5"/>';
+  if(base) s += '<rect x="24" y="'+(104-mi)+'" width="52" height="'+Math.max(4,mi)+'" fill="'+base.color+'" opacity=".85"/>';
+  if((t.wip.milk||0) > 0) s += '<rect x="24" y="'+(104-mi)+'" width="52" height="'+Math.min(10,mi)+'" fill="#FFF6E0" opacity=".75"/>';
+  (t.wip.pearls||[]).slice(0,8).forEach((p,i)=>{
+    s += '<circle cx="'+(32+(i%3)*13)+'" cy="'+(100-Math.floor(i/3)*9)+'" r="4.5" fill="'+((TEA_P.find(x8=>x8.id===p)||TEA_P[0]).color)+'"/>';
+  });
+  if(t.wip.sealed) s += '<rect x="19" y="32" width="62" height="10" rx="4" fill="#B98055"/>';
+  if(t.wip.straw)  s += '<rect x="56" y="8" width="6" height="30" rx="3" fill="#FF6B9D" transform="rotate(12 59 23)"/>';
+  s += '<ellipse cx="50" cy="114" rx="34" ry="5" fill="#E4D3BE"/>';
+  return s+'</svg>';
+}
+function frostPct(t){
+  const f = t.wip.frost;
+  if(!f || !f.length) return 0;
+  return f.filter(Boolean).length / f.length;
+}
+function butterPct(t){
+  const f = t.wip.butters;
+  if(!f || !f.length) return 0;
+  return f.filter(Boolean).length / f.length;
+}
+
+/* ================= 后厨 ================= */
+function loadBuild(tid){
+  const t = ticketOf(tid); if(!t) return;
+  const prev = state.buildId && state.buildId !== tid ? ticketOf(state.buildId) : null;
+  if(prev && prev.status === 'build') prev.status = 'open';
+  t.status = 'build';
+  state.buildId = tid;
+  SFX.select();
+  if(state.tab === 'build') renderBuild(); else renderRail();
+  checkTutorials('loadbuild');
+}
+function loadFinish(tid){
+  const t = ticketOf(tid); if(!t) return;
+  const prev = state.finishId && state.finishId !== tid ? ticketOf(state.finishId) : null;
+  if(prev && prev.status === 'finishW') prev.status = 'finish';
+  t.status = 'finishW';
+  state.finishId = tid;
+  SFX.select();
+  if(state.tab === 'finish') renderFinish(); else renderRail();
+  checkTutorials('loadfinish');
+}
+function trashBuild(){
+  const t = state.buildId ? ticketOf(state.buildId) : null;
+  if(!t){ toast('工作台上没有东西','warn'); return; }
+  confirmDlg({
+    title:'🗑 倒掉这一份？', text:'已经做好的步骤会全部丢掉，小票不会消失，可以重新开始。',
+    yes:'倒掉重来', danger:true,
+    onYes:()=>{
+      t.wip = emptyWip(t.spec.kind);
+      SFX.bad(); toast('已清空工作台'); renderBuild(); renderRail();
+    }
+  });
+}
+function overEl(x,y,el){
+  if(!el) return false;
+  const r = el.getBoundingClientRect();
+  return x>=r.left && x<=r.right && y>=r.top && y<=r.bottom;
+}
+function stepChips(names, cur){
+  return '<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;padding:3px 4px">' +
+    names.map((n,i)=>'<span class="chip" style="font-size:10px;'+
+      (i===cur?'background:#FF6B9D;color:#fff':(i<cur?'background:#E9FBF2;color:#2E8B62':'opacity:.55'))+'">'+(i+1)+'.'+n+'</span>').join('')+'</div>';
+}
+function renderBuildIdle(){
+  const body = $('buildBody');
+  const waiting = liveTickets().filter(t=>t.status==='open');
+  body.innerHTML = '';
+  const box = mkEl('div','pad-area');
+  const hint = mkEl('div','pad-hint');
+  const st = mkEl('div','pad-stage');
+  st.style.flexDirection = 'column';
+  st.style.gap = '8px';
+  if(!waiting.length){
+    st.appendChild(mkEl('div','','<div style="text-align:center;color:#B08A6C;font-weight:700">🧾 没有待开工的小票<br><span class="small-note">先去「前台接单」点一下客人</span></div>'));
+  }else{
+    st.appendChild(mkEl('div','','<div style="text-align:center;font-weight:800;color:#8B6543;margin-bottom:6px">选一张小票开工</div>'));
+    const row = mkEl('div','','<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"></div>');
+    waiting.forEach(t=>{
+      const c = mkEl('div','tray-card','<div class="pv">'+PROD[t.spec.kind].emoji+'</div><div class="tn">#'+t.no+' '+PROD[t.spec.kind].name+'</div><div class="tn">$'+t.price+'</div>');
+      c.style.width = '84px';
+      c.onclick = ()=>loadBuild(t.tid);
+      row.firstChild.appendChild(c);
+    });
+    st.appendChild(row);
+  }
+  box.appendChild(hint); box.appendChild(st);
+  body.appendChild(box);
+  $('buildTitle').textContent = '后厨：等着接小票';
+}
+function renderBuild(){
+  if(!$('buildBody')) return;
+  const t = state.buildId ? ticketOf(state.buildId) : null;
+  if(!t || t.status === 'finish' || t.status === 'finishW' || t.status === 'ready' || t.status === 'void'){ renderBuildIdle(); return; }
+  const body = $('buildBody');
+  body.innerHTML = '';
+  const recipe = mkEl('div','mini-recipe');
+  const pad = mkEl('div','pad-area');
+  body.appendChild(pad); body.appendChild(recipe);
+  $('buildTitle').textContent = '后厨 · 小票 #'+t.no+' · '+PROD[t.spec.kind].name;
+  const hint = mkEl('div','pad-hint');
+  const stage = mkEl('div','pad-stage');
+  pad.appendChild(hint); pad.appendChild(stage);
+  if(t.spec.kind === 'cake')  buildCake(t, hint, stage);
+  if(t.spec.kind === 'bread') buildBread(t, hint, stage);
+  if(t.spec.kind === 'tea')   buildTea(t, hint, stage);
+  renderRecipe(recipe, t);
+}
+
+/* ---- 蛋糕：后厨（叠胚 / 夹心） ---- */
+const CK = {WRAP:170, LH:26, MAXL:3};
+function buildCake(t, hint, stage){
+  const w = t.wip;
+  const n = w.layers.length;
+  const done = n > 0 && (n < 2 || !!w.filling);
+  hint.innerHTML = '把<b>蛋糕胚</b>拖到台面上叠层，两层以上再拖<b>夹心</b>进去　' +
+    '<span class="small-note">目标 '+t.spec.layers+' 层 · '+t.spec.flavor.name+'　（点蛋糕胚可以撤走一层）</span>';
+  // 蛋糕本体
+  const holder = mkEl('div');
+  holder.style.cssText = 'position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:0';
+  const wrap = mkEl('div','cake-wrap');
+  wrap.style.height = Math.max(0, n*CK.LH)+'px';
+  for(let j=0;j<n;j++){
+    const g = layerGeom(j,n);
+    const f = CAKE_F.find(x=>x.id===w.layers[j]) || CAKE_F[0];
+    const el = mkEl('div','st-layer');
+    el.style.cssText = 'left:'+g.x+'px;top:'+g.y+'px;width:'+g.w+'px;height:'+g.h+'px;background:'+f.color+
+      ';border:2px solid '+f.border+';cursor:pointer;';
+    el.title = '点一下撤走这一层';
+    el.onclick = ()=>{ w.layers.splice(j,1); w.frost = null; SFX.tap(); renderBuild(); };
+    wrap.appendChild(el);
+  }
+  if(w.filling && n >= 2){
+    const gf = CAKE_G.find(x=>x.id===w.filling) || CAKE_G[0];
+    for(let j=0;j<n-1;j++){
+      const g = layerGeom(j,n);
+      const ln = mkEl('div','st-fill');
+      ln.style.cssText = 'left:'+(g.x+5)+'px;top:'+(g.y-2)+'px;width:'+(g.w-10)+'px;height:5px;background:'+gf.color+';';
+      wrap.appendChild(ln);
+    }
+  }
+  if(!n){
+    const ph = mkEl('div','cake-placeholder-text','把蛋糕胚拖到这里');
+    wrap.style.height = '40px';
+    wrap.appendChild(ph);
+  }
+  holder.appendChild(wrap);
+  holder.appendChild(mkEl('div','st-plate'));
+  stage.appendChild(holder);
+  stage.appendChild(buildShelf([
+    {title:'🍰 蛋糕胚', hintTxt:'拖动或点击', items:CAKE_F.map(f=>({em:f.emoji, name:f.name, ghost:f.emoji, act:()=>addLayer(t,f)}))},
+    {title:'🥄 夹心', hintTxt:'两层以上', items:CAKE_G.map(g=>({em:g.emoji, name:g.name, ghost:g.emoji, act:()=>setFill(t,g)}))}
+  ], stage));
+  stage.appendChild(actionBar(done, ()=>{
+    if(!w.layers.length){ toast('先放蛋糕胚','warn'); return; }
+    if(w.layers.length >= 2 && !w.filling){ toast('两层以上要夹一层夹心哦','warn'); return; }
+    sendToFinish(t);
+  }, '✅ 送去精加工台'));
+}
+function addLayer(t, f){
+  if(t.wip.layers.length >= CK.MAXL){ toast('最多 '+CK.MAXL+' 层啦','warn'); SFX.tap(); return; }
+  t.wip.layers.push(f.id);
+  SFX.plop(); renderBuild(); renderRail();
+  checkTutorials('layer');
+}
+function setFill(t, g){
+  if(t.wip.layers.length < 2){ toast('先叠两层蛋糕胚才能加夹心','warn'); SFX.tap(); return; }
+  t.wip.filling = g.id;
+  SFX.select(); renderBuild();
+  checkTutorials('fill');
+}
+function buildShelf(groups, stageWrap){
+  const wrap = mkEl('div');
+  wrap.style.cssText = 'position:absolute;left:0;right:0;top:0;z-index:4;';
+  const shelf = mkEl('div','shelf');
+  groups.forEach(g=>{
+    shelf.appendChild(mkEl('span','sh-t', g.title));
+    g.items.forEach(it=>{
+      const c = mkEl('div','ing','<span class="ie">'+it.em+'</span><span class="in">'+it.name+'</span>');
+      if(it.ghost != null) bindDrag(c, {ghost:it.ghost}, {onEnd:()=>it.act()});
+      else c.onclick = ()=>it.act();
+      shelf.appendChild(c);
+    });
+  });
+  wrap.appendChild(shelf);
+  return wrap;
+}
+function actionBar(enabled, fn, label){
+  const bar = mkEl('div','action-bar');
+  bar.style.cssText = 'position:absolute;left:0;right:0;bottom:0;padding:6px;display:flex;justify-content:center;background:linear-gradient(transparent,rgba(255,246,236,.9) 40%);z-index:5';
+  const b = mkEl('button','btn sm', label);
+  b.disabled = !enabled;
+  b.onclick = fn;
+  bar.appendChild(b);
+  return bar;
+}
+function sendToFinish(t){
+  if(state.buildId === t.tid) state.buildId = null;
+  t.status = 'finish';
+  checkTutorials('sendfinish');
+  SFX.select(); SFX.plop();
+  toast('🧺 半成品已送到加工台 #'+t.no,'good');
+  // 加工台空着就直接接手
+  const cur = state.finishId ? ticketOf(state.finishId) : null;
+  if(!cur || cur.status === 'ready') loadFinish(t.tid);
+  else renderRail();
+  if(state.tab === 'build') { renderBuild(); toast('去「🎨 精加工」接着做','warn'); }
+  else renderBuild();
+}
+
+/* ---- 面包：后厨（揉面 / 加料 / 发酵 / 烘烤） ---- */
+const BR_STEPS = ['和面','加料','发酵','烘烤'];
+function buildBread(t, hint, stage){
+  const w = t.wip;
+  const step = (function(){
+    if(!w.dough) return 0;
+    if(w.knead < 1) return 0;
+    if(w.addin === null) return 1;
+    if(!w.prove) return 2;
+    if(!w.bakeOut) return 3;
+    return 4;
+  })();
+  hint.innerHTML = stepChips(BR_STEPS, Math.min(step,3)) +
+    '<div style="margin-top:2px">'+(step===0?'把<b>面团拖</b>到案板上，然后<b>按住面团画圈揉</b>'
+      :step===1?'<b>选一样配料</b>揉进面团'
+      :step===2?'<b>按住发酵</b>，进度条进<b>绿色区</b>再松手'
+      :step===3?'把面团<b>拖进烤箱</b>，到达目标色就<b>点一下取出</b>'
+      :'<b>✅ 可以送去精加工台啦</b>')+'</div>';
+  const stages = mkEl('div');
+  stages.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;';
+  if(step === 0 || !w.dough){
+    if(!w.dough){
+      const s = mkEl('div','shelf');
+      s.style.cssText = 'flex:0 0 auto;position:relative;background:none;border:none;box-shadow:none;justify-content:center';
+      s.appendChild(mkEl('span','sh-t','🍞 选面团'));
+      BREAD_D.forEach(d=>{
+        const c = mkEl('div','ing','<span class="ie">'+d.emoji+'</span><span class="in">'+d.name+'</span>');
+        bindDrag(c, {ghost:d.emoji}, {onEnd:()=>{ w.dough = d.id; SFX.plop(); renderBuild(); checkTutorials('knead'); }});
+        s.appendChild(c);
+      });
+      stages.appendChild(s);
+    }else{
+      const d = BREAD_D.find(x=>x.id===w.dough);
+      const dg = mkEl('div','dough','<div class="spin-ring"></div>'+ (d?d.emoji:'🍞'));
+      dg.style.position = 'relative';
+      const pr = mkEl('div','frost-bar','🥣 揉面 '+Math.round(w.knead*100)+'%');
+      stages.appendChild(pr);
+      stages.appendChild(dg);
+      bindCircle(dg, {
+        onTurn:turns=>{
+          w.knead = Math.min(1, turns/4);
+          if(w.knead >= 1){ dg.classList.remove('knead'); pr.className='frost-bar done'; pr.textContent='🥣 揉面完成 100%'; vibrate(30); SFX.plop(); checkTutorials('kneaded'); setTimeout(()=>renderBuild(), 320); }
+          else { pr.textContent = '🥣 揉面 '+Math.round(w.knead*100)+'%'; }
+        }
+      });
+      dg.addEventListener('pointerdown', ()=>dg.classList.add('knead'));
+      dg.addEventListener('pointerup', ()=>dg.classList.remove('knead'));
+    }
+  }
+  else if(step === 1){
+    const s = mkEl('div','shelf');
+    s.style.cssText = 'flex:0 0 auto;position:relative;background:none;border:none;box-shadow:none;justify-content:center';
+    s.appendChild(mkEl('span','sh-t','🍇 加料'));
+    BREAD_A.forEach(a=>{
+      const c = mkEl('div','ing','<span class="ie">'+a.emoji+'</span><span class="in">'+a.name+'</span>');
+      bindDrag(c, {ghost:a.emoji}, {onEnd:()=>{
+        w.addin = a.id; SFX.plop();
+        if(a.id!=='none') fx($('buildBody'),'coin-fx',a.emoji);
+        checkTutorials('prove'); renderBuild();
+      }});
+      s.appendChild(c);
+    });
+    stages.appendChild(s);
+    const prev = mkEl('div','dough', (BREAD_D.find(x=>x.id===w.dough)||BREAD_D[0]).emoji);
+    prev.style.width = 'clamp(70px,13vh,100px)';
+    stages.appendChild(prev);
+  }
+  else if(step === 2){
+    stages.appendChild(pourStage({
+      label:'🌡 发酵进度', cls:'', lo:52, hi:78, start:0, rate:44, btn:'🖐 按住「发酵」',
+      labelFn:v=>'🌡 发酵 '+v+'%（'+Math.round(zoneScore(v,52,78,26)*100)+'分）',
+      onDone:v=>{
+        w.proveScore = zoneScore(v, 52, 78, 26);
+        w.proveVal = v; w.prove = 1;
+        SFX.plop(); vibrate(30);
+        toast(w.proveScore>=.999 ? '✨ 发酵刚刚好！' : (w.proveScore>0 ? '发酵凑合能用…' : '💤 发酵没到位'), w.proveScore>=.999?'good':'warn');
+        renderBuild();
+        checkTutorials('bake');
+      }
+    }));
+  }
+  else if(step === 3 && !w.bakeOut){
+    if(!w.baking){
+      const ti = mkEl('div','frost-bar','🔥 目标：烘烤到 '+(t.spec.bake.pct-9)+'~'+(t.spec.bake.pct+9)+'% 取出 · '+t.spec.bake.name+'');
+      const board = mkEl('div');
+      board.style.cssText='display:flex;align-items:center;gap:12px;justify-content:center;align-items:flex-end;flex-wrap:wrap';
+      const dg = mkEl('div','dough',(BREAD_D.find(x=>x.id===w.dough)||BREAD_D[0]).emoji);
+      dg.style.width='clamp(64px,11vh,88px)';
+      dg.style.cursor='grab';
+      const ov = mkEl('div','oven','<div class="heel">🔥 OVEN</div><div class="door">🥖</div>');
+      const startBake = ()=>{
+        w.baking = true;
+        clearInterval(state.timers.bake);
+        state.timers.bake = setInterval(()=>{
+          if(!state.running || state.paused) return;
+          w.bakeVal = Math.min(100, (w.bakeVal||0) + 1.5);
+          const bar = document.getElementById('bakeFill');
+          if(bar) bar.style.width = w.bakeVal+'%';
+          const el = document.getElementById('bakeNow');
+          if(el) el.textContent = Math.round(w.bakeVal)+'%';
+          if(w.bakeVal >= 100){ clearInterval(state.timers.bake); SFX.bad(); }
+        }, 60);
+        SFX.plop2(); renderBuild();
+      };
+      bindDrag(dg, {ghost:'🥖'}, {onEnd:(x,y)=>{ if(overEl(x,y,ov)) startBake(); else toast('要拖到烤箱里才算进炉～','warn'); }});
+      board.appendChild(dg); board.appendChild(ov);
+      stages.appendChild(ti); stages.appendChild(board);
+      stages.appendChild(mkEl('div','swipe-hint','👉 把面团拖进烤箱'));
+    }else{
+      const ov = mkEl('div','oven hot','<div class="heel">🔥 烘烤中 <b id="bakeNow">0</b>%</div>'+
+        '<div class="door" id="bakeDoor" style="cursor:pointer">'+(BREAD_D.find(x=>x.id===w.dough)||BREAD_D[0]).emoji+'</div>'+
+        '<div style="position:absolute;left:10px;right:10px;top:8px;height:8px;background:rgba(0,0,0,.35);border-radius:5px">'+
+        '<div id="bakeFill" style="height:100%;width:0%;background:linear-gradient(90deg,#FFD54F,#FF7043);border-radius:5px"></div></div>');
+      const takeOut = ()=>{
+        clearInterval(state.timers.bake);
+        const v = w.bakeVal || 0;
+        w.baking = false; w.bakeOut = true;
+        const good = Math.abs(v - t.spec.bake.pct) <= 9 && v < 100;
+        SFX.plop(); vibrate(30);
+        toast(good ? '✨ 火候刚好！' : (v>=100 ? '🔥 烤焦了…' : '火候差一点'), good?'good':'warn');
+        checkTutorials('send');
+        renderBuild();
+      };
+      stages.appendChild(ov);
+      stages.appendChild(mkEl('div','swipe-hint','👉 到目标色时<b>点一下烤箱</b>取出'));
+      setTimeout(()=>{
+        const d = document.getElementById('bakeDoor');
+        if(d) d.onclick = takeOut;
+        const el = document.getElementById('bakeNow');
+        if(el) el.textContent = Math.round(w.bakeVal||0)+'%';
+        const bar = document.getElementById('bakeFill');
+        if(bar) bar.style.width = (w.bakeVal||0)+'%';
+      }, 0);
+    }
+  }
+  stage.appendChild(stages);
+  if(step >= 4) stage.appendChild(actionBar(true, ()=>sendToFinish(t), '✅ 送去精加工台'));
+}
+function vibrate(ms){ if(navigator.vibrate) try{ navigator.vibrate(ms); }catch(e){} }
+function zoneScore(v, lo, hi, tol){
+  const mid = (lo+hi)/2, half = (hi-lo)/2;
+  const dist = Math.abs(v - mid);
+  if(dist <= half) return 1;
+  return Math.max(0, 1 - (dist-half)/tol);
+}
+function pourStage(cfg){
+  const wrap = mkEl('div');
+  wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px';
+  const label = mkEl('div','frost-bar', cfg.label);
+  const g = mkEl('div','gauge');
+  const fill = mkEl('div','fill'+(cfg.cls?' '+cfg.cls:''));
+  const zn = mkEl('div','zone');
+  zn.style.bottom = cfg.lo+'%'; zn.style.height = (cfg.hi-cfg.lo)+'%';
+  g.appendChild(fill); g.appendChild(zn);
+  const btn = mkEl('button','pkey', cfg.btn);
+  btn.style.cssText = 'padding:8px 18px;font-size:15px';
+  wrap.appendChild(label); wrap.appendChild(g); wrap.appendChild(btn);
+  let val = cfg.start || 0;
+  const paint = ()=>{
+    fill.style.height = val+'%';
+    label.textContent = cfg.labelFn(Math.round(val));
+    g.classList.toggle('gauge-glow', val >= cfg.lo && val <= cfg.hi);
+  };
+  paint();
+  bindHold(btn, {
+    onTick: dt=>{ val = Math.min(100, val + dt*cfg.rate); paint(); SFX.pour(); },
+    onEnd: ()=>cfg.onDone(val)
+  });
+  if(cfg.onSkip){
+    const sb = mkEl('button','btn secondary sm', cfg.skipText || '这位客人不要，跳过');
+    sb.onclick = cfg.onSkip;
+    wrap.appendChild(sb);
+  }
+  return wrap;
+}
+
+/* ---- 奶茶：后厨（茶底 / 注水 / 加奶 / 加料） ---- */
+const TEA_STEPS = ['茶底','注水','加奶','加料'];
+function buildTea(t, hint, stage){
+  const w = t.wip;
+  const step = !w.base ? 0 : (w.waterS == null ? 1 : (!w.milkDone ? 2 : (!w.addinDone ? 3 : 4)));
+  hint.innerHTML = stepChips(TEA_STEPS, Math.min(step,3)) + '<div style="margin-top:2px">' +
+    (step===0?'先<b>选茶底</b>'
+    :step===1?'<b>按住</b>水壶注水，看到进度进<b>绿区</b>松手'
+    :step===2?'<b>按住</b>倒牛奶，倒到小票要求的刻度 <b>'+t.spec.milk.name+'</b>'
+    :step===3?(t.spec.pearls? '按小票<b>点一下加料 '+t.spec.pearls+' 颗</b>' : '这位客人<b>不要加料</b>，确认跳过')
+    :'<b>✅ 可以送去精加工台啦</b>')+'</div>';
+  const stages = mkEl('div');
+  stages.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;width:100%';
+  if(step === 0){
+    const s = mkEl('div','shelf');
+    s.style.cssText='flex:0 0 auto;position:relative;background:none;border:none;box-shadow:none;justify-content:center';
+    s.appendChild(mkEl('span','sh-t','🍵 茶底'));
+    TEA_B.forEach(b=>{
+      const c = mkEl('div','ing','<span class="ie">'+b.emoji+'</span><span class="in">'+b.name+'</span>');
+      bindDrag(c,{ghost:b.emoji},{onEnd:()=>{ w.base = b.id; SFX.plop(); checkTutorials('pour'); renderBuild(); }});
+      s.appendChild(c);
+    });
+    stages.appendChild(s);
+    stages.appendChild(mkEl('div','','<div style="font-size:50px;opacity:.5">🫖</div>'));
+  }
+  else if(step === 1){
+    stages.appendChild(pourStage({
+      label:'💧 注水中', cls:'tea', lo:WATER_LO, hi:WATER_HI, start:0, rate:52, btn:'🖐 按住「注水」',
+      labelFn:v=>'💧 水位 '+v+'%',
+      onDone:v=>{ w.waterVal = v; w.waterS = zoneScore(v, WATER_LO, WATER_HI, 30); SFX.plop(); vibrate(30); renderBuild(); checkTutorials('milk'); }
+    }));
+  }
+  else if(step === 2){
+    const target = t.spec.milk.pct;
+    if(target <= 0){
+      stages.appendChild(mkEl('div','','<div style="text-align:center"><div style="font-size:52px">🥛</div><div class="swipe-hint">小票写着<b>不加奶</b>，确认跳过</div></div>'));
+      const b = mkEl('button','btn sm','⏭ 确认不加奶');
+      b.onclick = ()=>{ w.milk = 0; w.milkDone = true; SFX.select(); renderBuild(); checkTutorials('addin'); };
+      stages.appendChild(b);
+    }else{
+      stages.appendChild(pourStage({
+        label:'🥛 加奶中', cls:'milk', lo:Math.max(2,target-11), hi:Math.min(96,target+11), start:0, rate:46, btn:'🖐 按住「加奶」',
+        labelFn:v=>'🥛 奶量 '+v+'%（目标 '+target+'%）',
+        onDone:v=>{ w.milk = v; w.milkDone = true; SFX.plop(); vibrate(30); renderBuild(); checkTutorials('addin'); }
+      }));
+    }
+  }
+  else if(step === 3){
+    if(!t.spec.pearls){
+      stages.appendChild(mkEl('div','','<div style="text-align:center"><div style="font-size:52px">🚫</div><div class="swipe-hint">小票写着<b>不加料</b>，确认跳过</div></div>'));
+      const b = mkEl('button','btn sm','⏭ 确认不加料');
+      b.onclick = ()=>{ w.addin = 'none'; w.addinDone = true; SFX.select(); renderBuild(); checkTutorials('send'); };
+      stages.appendChild(b);
+    }else{
+      stages.appendChild(mkEl('div','frost-bar','🧋 已加 <b>'+(w.pearls.length)+'</b> / 目标 '+t.spec.pearls+' 颗'));
+      const row = mkEl('div');
+      row.style.cssText='display:flex;gap:8px;flex-wrap:wrap;justify-content:center';
+      TEA_P.filter(p=>p.id!=='none').forEach(p=>{
+        const c = mkEl('div','ing','<span class="ie">'+p.emoji+'</span><span class="in">'+p.name+'</span>');
+        bindDrag(c,{ghost:p.emoji},{onEnd:()=>{
+          w.addin = p.id;
+          w.pearls.push(p.id);
+          SFX.pop(); vibrate(12);
+          renderBuild();
+          if(w.pearls.length >= t.spec.pearls + 4) toast('加太多了！点一颗可以拿回来','warn');
+        }});
+        row.appendChild(c);
+      });
+      stages.appendChild(row);
+      const b = mkEl('button','btn sm','✅ 加料完成，送去精加工台');
+      b.onclick = ()=>{ w.addinDone = true; SFX.select(); renderBuild(); checkTutorials('send'); };
+      stages.appendChild(b);
+    }
+  }
+  stage.appendChild(stages);
+  if(step >= 4) stage.appendChild(actionBar(true, ()=>sendToFinish(t), '✅ 送去精加工台'));
+}
+const WATER_LO = 62, WATER_HI = 84;
+
+/* ================= 需求核对 ================= */
+function topOf(t){
+  if(!t.wip.tops || !t.wip.tops.length) return 'none';
+  const c = {};
+  t.wip.tops.forEach(x=>{ c[x.type] = (c[x.type]||0)+1; });
+  let best = 'none', bn = 0;
+  Object.keys(c).forEach(k=>{ if(c[k] > bn){ bn = c[k]; best = k; } });
+  return best;
+}
+function reqLines(t){
+  const s = t.spec, w = t.wip;
+  if(s.kind === 'cake'){
+    const same = w.layers.length > 0 && w.layers.every(x=>x===s.flavor.id);
+    return [
+      ['🍰', s.flavor.name+'口味', same],
+      ['📶', s.layers+' 层', w.layers.length === s.layers],
+      s.layers >= 2 ? ['🥄','夹心 '+s.filling.name, w.filling === s.filling.id] : null,
+      ['🧈','抹面涂满', frostPct(t) >= .9],
+      ['🌸', s.topping.id==='none' ? '不要装饰' : '装饰 '+s.topping.name, topOf(t) === s.topping.id]
+    ].filter(Boolean);
+  }
+  if(s.kind === 'bread'){
+    return [
+      ['🥖', s.dough.name+'面团', w.dough === s.dough.id],
+      ['🍇', s.addin.id==='none' ? '不用加料' : '加料 '+s.addin.name, !!w.addin && w.addin === s.addin.id],
+      ['🔥', '烘烤 '+s.bake.name, bakeOk(t)],
+      s.butter ? ['🧈','刷一层黄油', butterPct(t) >= .9] : ['🧈','不用刷酱', butterPct(t) <= .02],
+      ['🏷️','装袋打包', !!w.packed]
+    ];
+  }
+  return [
+    ['🍵', s.base.name+'茶底', w.base === s.base.id],
+    ['💧','水量适中', (w.waterS||0) >= .999],
+    ['🥛', s.milk.name, milkOk(t)],
+    ['⚫', s.pearls ? (s.addin.name+' ×'+s.pearls) : '不用加料', addinOk(t)],
+    ['🍬', s.sweet.name, String(w.sweet) === s.sweet.id],
+    ['🥤','摇匀·封口·吸管', (w.shake||0) >= 6 && !!w.sealed && !!w.straw]
+  ];
+}
+function bakeOk(t){ return !!t.wip.bakeOut && Math.abs((t.wip.bakeVal||0) - t.spec.bake.pct) <= 9 && (t.wip.bakeVal||0) < 100; }
+function milkOk(t){
+  const target = t.spec.milk.pct;
+  if(target <= 0) return (t.wip.milk||0) <= 1;
+  return Math.abs((t.wip.milk||0) - target) <= 11;
+}
+function addinOk(t){
+  const s = t.spec;
+  if(!s.pearls) return (t.wip.pearls||[]).length === 0;
+  return !!t.wip.addin && t.wip.addin === s.addin.id && t.wip.pearls.length === s.pearls && !!t.wip.addinDone;
+}
+function qualityOf(t){
+  if(t.spec.kind === 'cake')  return frostPct(t);
+  if(t.spec.kind === 'bread'){
+    const a = [];
+    if(t.wip.knead) a.push(t.wip.knead);
+    if(t.wip.proveScore != null) a.push(t.wip.proveScore);
+    if(t.spec.butter) a.push(butterPct(t));
+    return a.length ? a.reduce((x,y)=>x+y,0)/a.length : 0;
+  }
+  const a = [];
+  if(t.wip.waterS != null) a.push(t.wip.waterS);
+  if(t.spec.milk.pct > 0 && t.wip.milk != null) a.push(zoneScore(t.wip.milk, Math.max(2,t.spec.milk.pct-11), Math.min(96,t.spec.milk.pct+11), 22));
+  return a.length ? a.reduce((x,y)=>x+y,0)/a.length : 0;
+}
+function renderRecipe(box, t){
+  box.innerHTML = '';
+  box.appendChild(mkEl('h5','','🧾 小票 #'+t.no));
+  reqLines(t).forEach(l=>{
+    box.appendChild(mkEl('div','rc-line'+(l[2]?' ok':''), '<span class="e">'+l[0]+'</span><span>'+l[1]+'</span>'));
+  });
+  const doneN = reqLines(t).filter(l=>l[2]).length;
+  box.appendChild(mkEl('div','small-note','💡 绿=已达标 '+doneN+'/'+reqLines(t).length));
+}
+function allCoreOk(t){
+  const rows = reqLines(t);
+  return rows.filter(r=>r[2]).length / rows.length;
+}
+
+/* ================= 精加工台 ================= */
+function renderFinishIdle(){
+  const body = $('finishBody');
+  body.innerHTML = '';
+  const waiting = liveTickets().filter(t=>t.status==='finish');
+  const box = mkEl('div','pad-area');
+  const hint = mkEl('div','pad-hint');
+  const st = mkEl('div','pad-stage');
+  st.style.flexDirection='column'; st.style.gap='8px';
+  if(!waiting.length){
+    st.appendChild(mkEl('div','','<div style="text-align:center;color:#B08A6C;font-weight:700">🎨 没有等着精加工的半成品<br><span class="small-note">后厨做完会自动送过来</span></div>'));
+  }else{
+    st.appendChild(mkEl('div','','<div style="text-align:center;font-weight:800;color:#8B6543;margin-bottom:6px">选一份开始精加工</div>'));
+    const row = mkEl('div','','<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"></div>');
+    waiting.forEach(t=>{
+      const c = mkEl('div','tray-card','<div class="pv">'+madeSVG(t,34)+'</div><div class="tn">#'+t.no+' '+PROD[t.spec.kind].name+'</div>');
+      c.style.width='84px';
+      c.onclick = ()=>loadFinish(t.tid);
+      row.firstChild.appendChild(c);
+    });
+    st.appendChild(row);
+  }
+  box.appendChild(hint); box.appendChild(st);
+  body.appendChild(box);
+  $('finishTitle').textContent = '精加工：等着半成品';
+}
+function renderFinish(){
+  if(!$('finishBody')) return;
+  const t = state.finishId ? ticketOf(state.finishId) : null;
+  if(!t || t.status !== 'finishW'){ renderFinishIdle(); return; }
+  const body = $('finishBody');
+  body.innerHTML = '';
+  const recipe = mkEl('div','mini-recipe');
+  const pad = mkEl('div','pad-area');
+  body.appendChild(pad); body.appendChild(recipe);
+  $('finishTitle').textContent = '精加工 · 小票 #'+t.no+' · '+PROD[t.spec.kind].name;
+  const hint = mkEl('div','pad-hint');
+  const stage = mkEl('div','pad-stage');
+  pad.appendChild(hint); pad.appendChild(stage);
+  if(t.spec.kind === 'cake')  finishCake(t, hint, stage);
+  if(t.spec.kind === 'bread') finishBread(t, hint, stage);
+  if(t.spec.kind === 'tea')   finishTea(t, hint, stage);
+  renderRecipe(recipe, t);
+}
+function sendToTray(t){
+  if(state.finishId === t.tid) state.finishId = null;
+  t.status = 'ready';
+  state.tray.push(t.tid);
+  SFX.plop(); SFX.ding();
+  toast('✅ 成品已放到出餐口 #'+t.no+' → 去「💰 出餐收银」交给客人','good');
+  renderRail();
+  if(state.tab === 'finish') renderFinish();
+  checkTutorials('totray');
+}
+
+/* ---- 蛋糕精加工：涂抹 + 摆装饰 ---- */
+function layerGeom(j,total){
+  const w = 140 - j*18;
+  return {w:w, x:(CK.WRAP-w)/2, y:(total-1-j)*CK.LH, h:CK.LH};
+}
+function frostCells(n){
+  const cells = [];
+  for(let j=0;j<n;j++){
+    const g = layerGeom(j,n);
+    const cw = (g.w-12)/5;
+    for(let k=0;k<5;k++) cells.push({x:g.x+6+k*cw, y:g.y+8, w:cw, h:12});
+  }
+  const gt = layerGeom(n-1,n);
+  const cwt = (gt.w-12)/5;
+  for(let k=0;k<5;k++) cells.push({x:gt.x+6+k*cwt, y:1, w:cwt, h:9});
+  return cells;
+}
+function finishCake(t, hint, stage){
+  const w = t.wip;
+  const n = w.layers.length || 1;
+  const cells = frostCells(n);
+  if(!w.frost || w.frost.length !== cells.length) w.frost = cells.map(()=>false);
+  const pct = Math.round(frostPct(t)*100);
+  hint.innerHTML = '① <b>按住手指/鼠标在蛋糕上来回擦</b>，把虚线奶油抹光滑 → ② 把<b>装饰拖</b>到顶上摆好位置<br>' +
+    '<span class="small-note">抹面 '+pct+'%（'+ (pct>=100?'满分':pct+'%') +'）　目标装饰：'+t.spec.topping.name+'</span>';
+  const holder = mkEl('div');
+  holder.style.cssText='position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:0';
+  const bar = mkEl('div','frost-bar'+(pct>=100?' done':''), pct>=100?'🧈 抹面完成 100%':'🧈 抹面 '+pct+'%');
+  bar.style.position='relative'; bar.style.top='auto'; bar.style.marginBottom='6px';
+  const wrap = mkEl('div','cake-wrap');
+  wrap.style.height = (n*CK.LH)+'px';
+  const cellEls = [];
+  for(let j=0;j<n;j++){
+    const g = layerGeom(j,n);
+    const f = CAKE_F.find(x=>x.id===w.layers[j]) || CAKE_F[0];
+    const el = mkEl('div','st-layer');
+    el.style.cssText='left:'+g.x+'px;top:'+g.y+'px;width:'+g.w+'px;height:'+g.h+'px;background:'+f.color+';border:2px solid '+f.border+';';
+    wrap.appendChild(el);
+    el.title = '点一下把这层撤走';
+    el.style.cursor = 'pointer';
+    el.onclick = ()=>{ w.layers.splice(j,1); w.frost = null; SFX.tap(); renderFinish(); };
+  }
+  if(w.filling && n>=2){
+    const g0 = CAKE_G.find(x=>x.id===w.filling);
+    for(let j=0;j<n-1;j++){
+      const g = layerGeom(j,n);
+      const ln = mkEl('div','st-fill');
+      ln.style.cssText='left:'+(g.x+5)+'px;top:'+(g.y-2)+'px;width:'+(g.w-10)+'px;height:5px;background:'+g0.color+';';
+      wrap.appendChild(ln);
+    }
+  }
+  cells.forEach((c,i)=>{
+    const el = mkEl('div','fcell'+(w.frost[i]?' smooth':''));
+    el.style.cssText='left:'+c.x+'px;top:'+c.y+'px;width:'+c.w+'px;height:'+c.h+'px;';
+    wrap.appendChild(el); cellEls.push(el);
+  });
+  const gt = layerGeom(n-1,n);
+  (w.tops||[]).forEach((tp,i)=>{
+    const el = mkEl('div','st-top',(CAKE_T.find(x=>x.id===tp.type)||CAKE_T[0]).emoji);
+    el.style.cssText='left:'+(gt.x+tp.x*(gt.w-20))+'px;top:-22px;font-size:22px;position:absolute;cursor:grab;z-index:3';
+    el.title='拖一下换位置，点一下拿走';
+    bindDrag(el,{ghost:el.textContent},{onEnd:(x,y)=>{
+      if(!overEl(x,y,wrap)){ w.tops.splice(i,1); SFX.tap(); }
+      else { const r = wrap.getBoundingClientRect(); tp.x = cl((x-r.left-10-gt.x)/Math.max(1,gt.w-20),0,1); SFX.pop(); }
+      renderFinish();
+    }});
+    wrap.appendChild(el);
+  });
+  const plate = mkEl('div','st-plate');
+  holder.appendChild(bar); holder.appendChild(wrap); holder.appendChild(plate);
+  stage.appendChild(holder);
+  bindSmear(wrap, ()=>cells, i=>{
+    if(w.frost[i]) return false;
+    w.frost[i] = true; cellEls[i].classList.add('smooth'); SFX.spread(); return true;
+  }, {onChange:()=>{
+    const p = Math.round(frostPct(t)*100);
+    bar.textContent = p>=100?'🧈 抹面完成 100%':'🧈 抹面 '+p+'%';
+    bar.classList.toggle('done', p>=100);
+    if(p>=100) checkTutorials('frost100');
+  }});
+  const shelf = mkEl('div','shelf');
+  shelf.style.cssText='position:absolute;left:0;right:0;bottom:0;z-index:4';
+  shelf.appendChild(mkEl('span','sh-t','🌸 装饰'));
+  CAKE_T.filter(x=>x.id!=='none').forEach(tp=>{
+    const c = mkEl('div','ing','<span class="ie">'+tp.emoji+'</span><span class="in">'+tp.name+'</span>');
+    bindDrag(c,{ghost:tp.emoji},{onEnd:(x,y)=>{
+      if(!w.layers.length){ toast('蛋糕胚还没到呢','warn'); return; }
+      if((w.tops||[]).length>=6){ toast('顶上放不下了','warn'); return; }
+      const r = wrap.getBoundingClientRect();
+      const ratio = overEl(x,y,wrap) ? cl((x-r.left-10-gt.x)/Math.max(1,gt.w-20),0,1) : (0.15+Math.random()*0.7);
+      w.tops.push({type:tp.id, x:ratio});
+      SFX.pop(); renderFinish();
+      checkTutorials('top');
+    }});
+    shelf.appendChild(c);
+  });
+  stage.appendChild(shelf);
+  stage.appendChild(actionBar(w.layers.length>0, ()=>sendToTray(t), '✅ 做好啦，放到出餐口'));
+}
+
+/* ---- 面包精加工：刷黄油 + 装袋 ---- */
+const BUTTER_COLS = 5, BUTTER_ROWS = 3, BCW = 30, BCH = 22;
+function butterCells(){
+  const cs = [];
+  for(let r=0;r<BUTTER_ROWS;r++) for(let c=0;c<BUTTER_COLS;c++)
+    cs.push({x:c*BCW, y:r*BCH, w:BCW, h:BCH});
+  return cs;
+}
+function finishBread(t, hint, stage){
+  const w = t.wip;
+  const needButter = t.spec.butter;
+  const step = (needButter && butterPct(t) < .999) ? 0 : (!w.packed ? 1 : 2);
+  hint.innerHTML = stepChips(needButter?['刷黄油','装袋']:['不用刷酱','装袋'], Math.min(step,1)) +
+    '<div style="margin-top:2px">'+(step===0?'<b>按住</b>黄油刀，把整块面包<b>涂满</b>'
+      :step===1?'<b>左右来回滑动</b>把面包装进纸袋'
+      :'<b>✅ 完成，可以出餐</b>')+'</div>';
+  const stages = mkEl('div');
+  stages.style.cssText='display:flex;flex-direction:column;align-items:center;gap:8px;width:100%';
+  const d = BREAD_D.find(x=>x.id===w.dough)||BREAD_D[0];
+  if(step === 0){
+    const cs = butterCells();
+    if(!w.butters || w.butters.length !== cs.length) w.butters = cs.map(()=>false);
+    const bar = mkEl('div','frost-bar','🧈 黄油 '+Math.round(butterPct(t)*100)+'%');
+    bar.style.cssText='position:relative;top:auto;margin-bottom:4px';
+    const loaf = mkEl('div');
+    loaf.style.cssText='position:relative;width:'+(BUTTER_COLS*BCW)+'px;height:'+(BUTTER_ROWS*BCH)+'px;border-radius:14px;overflow:hidden;background:'+d.color+';border:3px solid '+d.border+';cursor:crosshair;touch-action:none';
+    const els = [];
+    cs.forEach((c,i)=>{
+      const el = mkEl('div','fcell'+(w.butters[i]?' smooth':''));
+      el.style.cssText='left:'+c.x+'px;top:'+c.y+'px;width:'+c.w+'px;height:'+c.h+'px;border-radius:0;border-style:dashed';
+      loaf.appendChild(el); els.push(el);
+    });
+    bindSmear(loaf, ()=>cs, i=>{
+      if(w.butters[i]) return false;
+      w.butters[i] = true; els[i].classList.add('smooth'); SFX.spread(); return true;
+    }, {radius:24, onChange:()=>{
+      const p = Math.round(butterPct(t)*100);
+      bar.textContent = '🧈 黄油 '+p+'%';
+      bar.classList.toggle('done', p>=100);
+      if(p>=100){ vibrate(30); SFX.plop(); setTimeout(renderFinish, 350); }
+    }});
+    stages.appendChild(bar); stages.appendChild(loaf);
+    stages.appendChild(mkEl('div','swipe-hint','👉 按住擦满整块面包'));
+  }
+  else if(step === 1){
+    const bag = mkEl('div','bag');
+    bag.style.cssText='position:relative;width:150px;height:110px;border-radius:12px;background:linear-gradient(#F6E7D2,#E3C79E);border:4px solid #C9A47F;display:flex;align-items:center;justify-content:center;font-size:46px;cursor:grab;touch-action:none';
+    bag.textContent = d.emoji;
+    const bar = mkEl('div','frost-bar','📦 装袋进度 '+(w.shake||0)+'/6');
+    bar.style.cssText='position:relative;top:auto;margin-bottom:4px';
+    bindSwipe(bag, {onStep:n=>{
+      w.shake = n;
+      bar.textContent = '📦 装袋进度 '+Math.min(n,6)+'/6';
+      bag.classList.add('shake');
+      setTimeout(()=>bag.classList.remove('shake'), 200);
+      if(n >= 6){
+        w.packed = true; vibrate(40); SFX.select();
+        bar.className='frost-bar done'; bar.textContent='📦 打包完成';
+        checkTutorials('send');
+        setTimeout(renderFinish, 320);
+      }
+    }});
+    stages.appendChild(bar); stages.appendChild(bag);
+    stages.appendChild(mkEl('div','swipe-hint','👉 在纸袋上<b>左右来回滑动</b>'));
+  }
+  else{
+    stages.appendChild(mkEl('div','','<div style="font-size:60px;animation:bob 1s infinite">'+(w.packed?'🥖📦':'🥖')+'</div>'));
+  }
+  stage.appendChild(stages);
+  if(step >= 2) stage.appendChild(actionBar(true, ()=>sendToTray(t), '✅ 做好啦，放到出餐口'));
+}
+
+/* ---- 奶茶精加工：加糖 / 摇匀 / 封口 / 吸管 ---- */
+function finishTea(t, hint, stage){
+  const w = t.wip;
+  const doneSweet = !!w.sweetDone, doneShake = (w.shake||0) >= 6, doneSeal = !!w.sealed, doneStraw = !!w.straw;
+  const step = !doneSweet ? 0 : (!doneShake ? 1 : (!doneSeal ? 2 : (!doneStraw ? 3 : 4)));
+  hint.innerHTML = stepChips(['加糖','摇匀','封口','吸管'], Math.min(step,3)) + '<div style="margin-top:2px">' +
+    (step===0?'按小票点糖罐：<b>'+t.spec.sweet.name+'</b>（现在是<b id="swNow">'+sweetName(w.sweet)+'</b>）'
+    :step===1?'在杯子上<b>左右来回滑动</b>摇匀'
+    :step===2?'把<b>杯盖拖</b>到杯子上封口'
+    :step===3?'把<b>吸管拖</b>到杯子里'
+    :'<b>✅ 完成，可以出餐</b>')+'</div>';
+  const stages = mkEl('div');
+  stages.style.cssText='display:flex;flex-direction:column;align-items:center;gap:8px;width:100%';
+  const cup = mkEl('div','cup'+(w.sealed?' lidded':'')+(w.straw?' strawed':''));
+  const liq = mkEl('div','liq');
+  const base = w.base ? TEA_B.find(x=>x.id===w.base) : null;
+  liq.style.height = Math.max(18, (w.waterVal||70)) + '%';
+  liq.style.background = 'linear-gradient(#FFF6E0,' + (base?base.color:'#A0522D') + ')';
+  const milkLayer = mkEl('div','liq');
+  milkLayer.style.bottom = 'auto'; milkLayer.style.top = '0';
+  milkLayer.style.height = Math.min(liq.style.height, (w.milk||0)+'%');
+  milkLayer.style.background = 'rgba(255,255,255,.5)';
+  cup.appendChild(liq); cup.appendChild(milkLayer);
+  (w.pearls||[]).slice(0,9).forEach((p,i)=>{
+    const pe = mkEl('div','pearl');
+    pe.style.left = (6 + (i%3)*14) + 'px';
+    pe.style.bottom = (4 + Math.floor(i/3)*10) + 'px';
+    pe.style.background = (TEA_P.find(x=>x.id===p)||TEA_P[0]).color;
+    cup.appendChild(pe);
+  });
+  const lid = mkEl('div','lid'); cup.appendChild(lid);
+  const straw = mkEl('div','straw'); cup.appendChild(straw);
+  stages.appendChild(cup);
+  const sweetTag = mkEl('div','frost-bar','🍬 甜度：'+sweetName(w.sweet));
+  sweetTag.style.cssText='position:relative;top:auto;margin-bottom:4px';
+  if(step === 0){
+    stages.appendChild(sweetTag);
+    const row = mkEl('div');
+    row.style.cssText='display:flex;gap:10px;justify-content:center';
+    TEA_S.forEach((s,i)=>{
+      const c = mkEl('div','ing','<span class="ie">'+s.emoji+'</span><span class="in">'+s.name+'</span>');
+      bindDrag(c,{ghost:s.emoji},{onEnd:()=>{
+        w.sweet = Number(s.id);
+        SFX.pop();
+        if(String(w.sweet) === t.spec.sweet.id){ w.sweetDone = true; SFX.plop(); vibrate(20); }
+        else { w.sweetDone = true; toast('甜度是 '+s.name+'，和小票不太一样', 'warn'); }
+        renderFinish(); checkTutorials('shake');
+      }});
+      row.appendChild(c);
+    });
+    stages.appendChild(row);
+    stages.appendChild(mkEl('div','swipe-hint','👉 选一个糖度（错了也照样可以出餐）'));
+  }
+  else if(step === 1){
+    const bar = mkEl('div','frost-bar','🥤 摇匀 '+(w.shake||0)+'/6');
+    bar.style.cssText='position:relative;top:auto;margin-bottom:4px';
+    stages.insertBefore(bar, cup);
+    bindSwipe(cup, {onStep:n=>{
+      w.shake = n;
+      bar.textContent = '🥤 摇匀 '+Math.min(n,6)+'/6';
+      cup.classList.add('shake');
+      setTimeout(()=>cup.classList.remove('shake'), 200);
+      if(n >= 6){ vibrate(30); SFX.select(); bar.className='frost-bar done'; bar.textContent='🥤 摇匀完成'; checkTutorials('seal'); setTimeout(renderFinish, 300); }
+    }});
+    stages.appendChild(mkEl('div','swipe-hint','👉 在杯子上<b>左右滑动</b>'));
+  }
+  else if(step === 2){
+    const row = mkEl('div'); row.style.cssText='display:flex;justify-content:center';
+    const c = mkEl('div','ing','<span class="ie">🍼</span><span class="in">杯盖</span>');
+    bindDrag(c,{ghost:'🍼'},{onEnd:(x,y)=>{ if(overEl(x,y,cup)){ w.sealed = true; SFX.plop(); vibrate(20); checkTutorials('straw'); renderFinish(); } }});
+    row.appendChild(c);
+    stages.appendChild(row);
+    stages.appendChild(mkEl('div','swipe-hint','👉 把<b>杯盖拖</b>到杯口'));
+  }
+  else if(step === 3){
+    const row = mkEl('div'); row.style.cssText='display:flex;justify-content:center';
+    const c = mkEl('div','ing','<span class="ie">🥤</span><span class="in">吸管</span>');
+    bindDrag(c,{ghost:'🥤'},{onEnd:(x,y)=>{ if(overEl(x,y,cup)){ w.straw = true; SFX.plop(); vibrate(20); checkTutorials('send'); renderFinish(); } }});
+    row.appendChild(c);
+    stages.appendChild(row);
+    stages.appendChild(mkEl('div','swipe-hint','👉 把<b>吸管拖</b>进去'));
+  }
+  stage.appendChild(stages);
+  if(step >= 4) stage.appendChild(actionBar(true, ()=>sendToTray(t), '✅ 做好啦，放到出餐口'));
+}
+function sweetName(n){
+  const s = TEA_S.find(x=>String(x.id)===String(n));
+  return s ? s.name+' '+s.emoji : '还没加糖';
+}
+
+
+/* ================= 出餐收银 ================= */
+function renderServe(){
+  if(!$('trayRow')) return;
+  const row = $('trayRow');
+  row.innerHTML = '';
+  const ids = state.tray.filter(id=>{
+    const t = ticketOf(id); return t && t.status === 'ready';
+  });
+  if(!ids.length){
+    row.appendChild(mkEl('div','empty-q','🧺 出餐口是空的，先去后厨做几单吧'));
+  }
+  ids.forEach(id=>{
+    const t = ticketOf(id);
+    const c = mkEl('div','tray-card');
+    c.innerHTML = '<div class="pv">'+madeSVG(t,34)+'</div><div class="tn">#'+t.no+' '+PROD[t.spec.kind].name+'</div><div class="go">🙋</div>';
+    c.onclick = ()=>serveNow(t);
+    row.appendChild(c);
+  });
+  $('trayNote').textContent = ids.length ? ('共 '+ids.length+' 份待出餐 · 点一下交给客人') : '做好的成品会放在这里';
+  renderCash();
+  updateThief();
+}
+function gradeTicket(t){
+  const rows = reqLines(t);
+  const okCount = rows.filter(r=>r[2]).length;
+  const core = rows.length ? okCount/rows.length : 0;
+  const q = qualityOf(t);
+  let pct = core*.85 + q*.15;
+  pct = Math.max(0, Math.min(1, pct));
+  const miss = rows.filter(r=>!r[2]).map(r=>r[1]);
+  return {rows:rows, ok:okCount, core:core, quality:q, pct:pct, miss:miss,
+    rating: pct>=.95?'perfect':pct>=.8?'great':pct>=.6?'ok':'bad'};
+}
+function serveNow(t){
+  if(!canPlay()) return;
+  const g = gradeTicket(t);
+  const base = t.price;
+  let pay = Math.round(base * (0.32 + 0.68*g.pct));
+  // 连击
+  const comboStep = 0.06 + perkVal('rug');
+  const bonus = g.rating === 'bad' ? 0 : Math.min(state.combo*comboStep, 0.5);
+  pay = Math.round(pay * (1 + bonus));
+  if(g.rating === 'perfect' && state.buffs.double) pay *= 2;
+  if(state.buffs.tipjar) pay += 5;
+  pay += Math.round(perkVal('plant'));
+  pay = Math.round(pay * (1 + perkVal('window')));
+
+  if(g.rating === 'bad') state.combo = 0;
+  else {
+    state.combo += (g.rating === 'perfect' ? 2 : 1);
+    if(state.combo > state.maxCombo) state.maxCombo = state.combo;
+    if(state.combo > state.bestCombo) state.bestCombo = state.combo;
+  }
+  state.money += pay;
+  state.totalMoney += pay;
+  state.served++;
+  state.registerCash = state.money;
+  state.history.push({pct:g.pct, pay:pay, no:t.no, kind:t.spec.kind});
+  checkTutorials('served');
+
+  t.status = 'done';
+  state.tray = state.tray.filter(x=>x !== t.tid);
+  renderRail(); renderServe(); updateTop();
+
+  const label = g.rating==='perfect'?'🤩 完美！ +$'+pay : g.rating==='great'?'😊 很棒 +$'+pay :
+                g.rating==='ok'?'🙂 一般 +$'+pay : '😕 不太对 +$'+pay;
+  fx($('serveScene'), 'float-tx', label);
+  fx($('serveScene'), 'coin-fx', '💰', 120 + Math.random()*80, 60);
+  if(g.rating==='perfect'){ SFX.perfect(); SFX.coin(); } else if(g.rating==='bad') SFX.bad(); else { SFX.good(); SFX.coin(); }
+  if(bonus > 0) setTimeout(()=>toast('🔥 连击加成 +'+Math.round(bonus*100)+'%','good'), 260);
+  if(g.miss.length) setTimeout(()=>toast('小票差一点点：'+g.miss.slice(0,3).join('、'), 'warn'), 420);
+
+  const cust = state.custs.find(x=>x.cid===t.cid);
+  if(state.level >= 4 && cust) openCash(t, cust, pay);
+  else finishCustomer(t.cid, g);
+  save();
+  if(state.money >= state.target) setTimeout(()=>{ if(state.running) endLevel(true); }, 700);
+}
+function finishCustomer(cid, g){
+  const c = state.custs.find(x=>x.cid===cid);
+  if(!c) { renderQueue(); return; }
+  const q = $('custQueue');
+  const el = q && q.querySelector('[data-cid="'+cid+'"]');
+  if(el){ el.classList.add('leaving'); setTimeout(()=>el.remove(), 460); }
+  state.custs = state.custs.filter(x=>x.cid !== cid);
+  setTimeout(renderQueue, 220);
+  checkTutorials('served');
+}
+
+/* ---- 收银找零 ---- */
+function openCash(t, cust, pay){
+  const bills = [20,50,100,200];
+  let paid = bills.find(b=>b >= pay) || 200;
+  if(chance(.35)){ const i = bills.indexOf(paid); if(i>=0 && i < bills.length-1) paid = bills[i+1]; }
+  state.cash = {tid:t.tid, cid:cust.cid, pay:pay, paid:paid, due:paid-pay, given:0, typed:''};
+  checkTutorials('cash');
+  renderServe();
+}
+function renderCash(){
+  const p = $('cashPanel'); if(!p) return;
+  p.innerHTML = '';
+  const c = state.cash;
+  if(!c){
+    p.appendChild(mkEl('div','small-note','💵 把成品交给顾客时，会在这里<b>收钱找零</b>。'));
+    p.appendChild(mkEl('div','','<div style="font-size:34px;text-align:center;opacity:.5;margin-top:6px">🧾💵</div>'));
+    p.appendChild(mkEl('div','small-note','第 4 关开始顾客会付整钱，要用下面的按键找零哦。'));
+    return;
+  }
+  const scr = mkEl('div','cash-screen',
+    '<div class="row"><span>这单</span><span class="hi">$'+c.pay+'</span></div>' +
+    '<div class="row"><span>顾客给了</span><span>$'+c.paid+'</span></div>' +
+    '<div class="row"><span>要找零</span><span class="hi">$'+c.due+'</span></div>' +
+    '<div class="row"><span>已放钱</span><span>$'+c.given+'</span></div>');
+  p.appendChild(scr);
+  const quick = mkEl('div','paid-row');
+  [1,5,10,20,50].forEach(n=>{
+    const b = mkEl('div','note-item','+'+n);
+    b.onclick = ()=>{
+      if(!canPlay()) return;
+      c.given += n; c.typed = String(c.given);
+      SFX.coin(); vibrate(12); renderCash();
+    };
+    quick.appendChild(b);
+  });
+  p.appendChild(quick);
+  const kp = mkEl('div','keypad');
+  [1,2,3,4,5,6,7,8,9].forEach(n=>{
+    const b = mkEl('button','pkey', String(n));
+    b.onclick = ()=>{
+      if(!canPlay()) return;
+      if(c.typed.length < 3) c.typed += String(n);
+      c.given = parseInt(c.typed || '0', 10);
+      SFX.tap(); renderCash();
+    };
+    kp.appendChild(b);
+  });
+  const b0 = mkEl('button','pkey','0');
+  b0.onclick = ()=>{ if(!canPlay()) return; if(c.typed.length<3) c.typed += '0'; c.given=parseInt(c.typed||'0',10); SFX.tap(); renderCash(); };
+  const bc = mkEl('button','pkey','↺');
+  bc.onclick = ()=>{ if(!canPlay()) return; c.typed=''; c.given=0; SFX.tap(); renderCash(); };
+  const bo = mkEl('button','pkey wide','✅ 送出');
+  bo.style.cssText = 'background:linear-gradient(#FFF0F5,#FFD9E4);color:#D6336C';
+  bo.onclick = ()=>settleCash();
+  kp.appendChild(bc); kp.appendChild(b0); kp.appendChild(bo);
+  p.appendChild(kp);
+  p.appendChild(mkEl('div','small-note','按上面的金额按键，凑够找零再按「送出」'));
+}
+function settleCash(){
+  if(!canPlay() || !state.cash) return;
+  const c = state.cash;
+  const right = c.given === c.due;
+  const cust = state.custs.find(x=>x.cid===c.cid);
+  if(right){
+    const tip = 2 + Math.floor(Math.random()*3);
+    state.money += tip; state.totalMoney += tip; state.registerCash = state.money;
+    SFX.kaching();
+    toast('✅ 找零正确！顾客留下 $'+tip+' 小费','good');
+    fx($('serveScene'),'coin-fx','🪙', 200, 70);
+  }else{
+    const off = Math.abs(c.given - c.due);
+    const pen = Math.min(state.money, 3 + off);
+    state.money -= pen; state.totalMoney = Math.max(0, state.totalMoney - pen);
+    state.registerCash = state.money;
+    SFX.bad();
+    toast((c.given < c.due ? '找少了 $'+off : '找多了 $'+off)+'！赔了 $'+pen,'bad');
+  }
+  state.cash = null;
+  save(); updateTop();
+  if(cust) finishCustomer(c.cid);
+  renderServe();
+  checkTutorials('cashdone');
+}
+
+/* ---- 小偷 ---- */
+function maybeThief(L){
+  if(!L.thief || state.buffs.bell) return;
+  if(state.thief){ return; }
+  if(state.thiefCd > 0){ state.thiefCd -= .1; return; }
+  if(Math.random() < L.thief * .03 * (1 - Math.min(.8, perkVal('pet')))) spawnThief();
+}
+function spawnThief(){
+  state.thief = {hp:5, max:5, t:0, limit:7, hits:0};
+  state.thiefCd = (levelCfg(state.level).thiefCd || 24);
+  SFX.thief(); SFX.alarm();
+  toast('🥷 有小偷！快去「出餐收银」逮住他！','bad');
+  tabBadge('serve', '🥷');
+  if(state.tab === 'serve') gotoTab('serve');
+  else {
+    fx(null,'float-tx','🥷 小偷！');
+    const s = document.createElement('div');
+    s.className = 'alarm'; s.textContent = '🥷 有小偷！去「出餐收银」抓他';
+    $('stage').appendChild(s);
+    setTimeout(()=>s.remove(), 3200);
+  }
+  clearInterval(state.timers.thiefT);
+  state.timers.thiefT = setInterval(()=>{
+    if(!state.running || state.paused){ return; }
+    const th = state.thief; if(!th){ clearInterval(state.timers.thiefT); return; }
+    th.t += .1;
+    if(th.t >= th.limit){ thiefEscape(); return; }
+    if(state.tab === 'serve') updateThief();
+  }, 100);
+  checkTutorials('thief');
+}
+function thiefHit(){
+  const th = state.thief; if(!th || !canPlay()) return;
+  th.hits++; th.hp--;
+  SFX.plop(); vibrate(20);
+  const el = document.querySelector('.thief .tb');
+  if(el){ el.classList.add('hit'); setTimeout(()=>el.classList.remove('hit'), 210); }
+  updateThief();
+  if(th.hp <= 0) thiefCaught();
+}
+function thiefCaught(){
+  clearInterval(state.timers.thiefT);
+  state.thief = null;
+  const reward = 20 + state.level*4;
+  state.money += reward; state.totalMoney += reward; state.registerCash = state.money;
+  SFX.perfect(); SFX.coin();
+  toast('👮 抓住小偷！奖金 +$'+reward,'good');
+  fx($('serveScene'),'coin-fx','💎',160,60);
+  updateTop(); renderServe(); save(); checkTutorials('caught');
+}
+function thiefEscape(){
+  clearInterval(state.timers.thiefT);
+  state.thief = null;
+  const loss = Math.min(state.money, 18 + state.level*5);
+  state.money -= loss; state.totalMoney = Math.max(0, state.totalMoney - loss);
+  state.registerCash = state.money;
+  SFX.lose();
+  toast('🥷 小偷跑掉了，被偷走 $'+loss,'bad');
+  updateTop(); renderServe(); save();
+}
+function clearThief(force){
+  clearInterval(state.timers.thiefT);
+  if(state.thief && force) state.thief = null;
+  const old = document.querySelector('.thief'); if(old) old.remove();
+  const old2 = document.querySelector('.alarm'); if(old2) old2.remove();
+}
+function updateThief(){
+  const sc = $('serveScene'); if(!sc) return;
+  const old = sc.querySelector('.thief'); if(old) old.remove();
+  const th = state.thief;
+  if(!th){ tabBadge('serve', liveTickets().filter(t=>t.status==='ready').length); return; }
+  const el = mkEl('div','thief');
+  el.innerHTML = '<div class="tb">🥷</div><div class="thp"><div class="thpf" style="width:'+(th.hp/th.max*100)+'%"></div></div>' +
+                 '<div style="font-size:9px;font-weight:800;color:#FF3D3D;background:#fff;border-radius:6px">连点 '+th.hp+' 下</div>';
+  el.style.right = '18%'; el.style.bottom = '16%';
+  el.onclick = thiefHit;
+  sc.appendChild(el);
+  const al = document.querySelector('.alarm');
+  if(!al){
+    const a = mkEl('div','alarm','🥷 连点小偷 '+th.hp+' 下！');
+    sc.appendChild(a);
+  }else{
+    al.textContent = '🥷 连点小偷 '+th.hp+' 下！';
+  }
+  tabBadge('serve','🥷');
+}
+
+/* ================= 教程系统 ================= */
+const TUTS = {
+  L1:{title:'🎓 新手教学（第 1 关）', steps:[
+    {say:'欢迎来到你的小店！经营一共四站：<b>接单 → 后厨 → 精加工 → 出餐</b>。<br>现在前台已经有客人了，<b>点一下这位客人</b>接下订单。', focus:'#custQueue', wait:'takeorder'},
+    {say:'拿到小票啦 🧾 小票会一直挂在屏幕下方的<b>小票夹</b>上，随时点开都能再看顾客要什么。<br>它已经自动放到后厨台面上了，点底部的 <b>🔥 后厨制作</b> 过去看看。', focus:'#tabs', wait:'gobuild'},
+    {say:'这是后厨。右边一列就是这张小票的要求，<b>绿了代表做对了</b>。<br>先看小票要几层——把下面的<b>蛋糕胚拖</b>到台面上叠起来（直接点一下也可以）。', focus:'#buildBody', wait:'layer'},
+    {say:'很好！<b>两层以上</b>的话，还要把<b>夹心拖</b>进去。<br>小票只有一层的话就不需要夹心，直接下一步。'},
+    {say:'后厨就完成了！点 <b>✅ 送去精加工台</b>，把半成品交给下一站。', wait:'sendfinish'},
+    {say:'半成品已经躺在🎨 <b>精加工台</b>上了，切过去继续。<br>以后都是这样「流水线」作业——工位上的<b>红点</b>就是待办数量。', focus:'#tabs', wait:'gofinish'},
+    {say:'精加工台要给蛋糕<b>抹面</b>：<b>按住手指/鼠标，在蛋糕上来回擦</b>，把虚线奶油擦成光滑的。<br>擦得越干净，卖相越好、卖得越贵。', focus:'#finishBody', wait:'frost100'},
+    {say:'最后把<b>装饰拖</b>到蛋糕顶上摆好。小票写「不要装饰」时就一个都别放；<br>摆错或放多了，<b>点一下</b>那个装饰就能拿走。', focus:'.cake-wrap', wait:'top'},
+    {say:'完工！点 <b>✅ 做好啦，放到出餐口</b>。', wait:'totray'},
+    {say:'成品已经放到出餐口了。点一下💰 <b>出餐收银</b>，把它交到顾客手上。<br>顾客就在这个工位等着你呢。', focus:'#tabs', wait:'goserve'},
+    {say:'点一下成品，客人就收到啦。<br>⚠️ 客人头顶的耐心条走完会生气走人，还会扣钱，别让人干等太久。', focus:'#trayRow', wait:'served'},
+    {say:'整套流程就是这样！<br>连续做对会攒<b>连击加成</b>，抹面/火候/水位这些「手感」也会算进评分。<br>在时间结束前赚够目标金额就能过关——开店去吧 💛'}
+  ]},
+  bread:{title:'🥖 新品类：面包', steps:[
+    {say:'🥖 面包单！面包要在<b>后厨</b>连做四步：<b>和面 → 加料 → 发酵 → 烘烤</b>。<br>先把右边的<b>面团拖</b>到案板上。'},
+    {say:'像真的揉面一样：<b>按住面团画圈</b>，把上面的进度揉到 100%。', focus:'#buildBody', wait:'kneaded'},
+    {say:'挑一样配料揉进面团（小票写「不用加料」就选 ∅）。', wait:'prove'},
+    {say:'<b>按住发酵</b>，进度条走到<b>绿色区</b>再松手。<br>早了、晚了都会扣分，这一下考手感。', wait:'bake'},
+    {say:'把面团<b>拖进烤箱</b>，盯着烤箱上面的进度条：<br>到小票要求的<b>色度区间</b>时<b>点一下烤箱</b>取出来，过头就烤焦了。', wait:'send'},
+    {say:'最后去<b>精加工台</b>刷黄油（同样是<b>按住擦满</b>），再<b>左右来回滑动</b>装袋。<br>每一步都写在右边的小票清单里，随时对照。'}
+  ]},
+  tea:{title:'🧋 新品类：奶茶', steps:[
+    {say:'🧋 奶茶单！奶茶也是四步：<b>茶底 → 注水 → 加奶 → 加料</b>。<br>先拖一个茶底到台面上。', focus:'#buildBody', wait:'pour'},
+    {say:'<b>按住</b>注水，看右边的量杯：<b>水位进绿区</b>再松手。', wait:'milk'},
+    {say:'按小票写的<b>奶量</b>，<b>按住</b>倒奶到目标刻度。<br>写「不加奶」就直接点跳过。', wait:'addin'},
+    {say:'珍珠之类的配料要<b>一颗一颗点</b>进去，数量必须和小票一致，点完按「加料完成」。', wait:'send'},
+    {say:'最后去<b>精加工台</b>：选糖度 → 在杯子上<b>左右滑动</b>摇匀 → 把<b>杯盖</b>和<b>吸管</b>拖上去。<br>做完照样点「放到出餐口」。'}
+  ]},
+  cash:{title:'💵 新玩法：自己收钱', steps:[
+    {say:'顾客开始付整钱了！<br>收银机屏幕上写着<b>「要找零」</b>的金额：<br>你可以用下面的<b>数字按键</b>直接输入，也可以点上面的快捷金额累加，凑够后按 <b>✅ 送出</b>。<br>找对了有额外小费，找错了要赔钱。', focus:'#cashPanel', wait:'cashdone'}
+  ]},
+  thief:{title:'🥷 当心小偷', steps:[
+    {say:'🥷 有小偷盯上收银台了！<br>切到<b>出餐收银</b>工位，<b>连点他几下</b>就能按倒，抓到还有奖金。<br>限时内没抓住，会被偷走一笔钱。<br>💡 在家里买「伙伴」家具可以降低他来的概率。', focus:'#serveScene', wait:'caught'}
+  ]},
+  home:{title:'🏠 我的小屋', steps:[
+    {say:'这里是小满住的地方。<br>右边列出家里的各个<b>位置</b>，买下家具后会立刻出现在房间里，并且带来<b>永久加成</b>——更长的营业时间、更耐心的顾客、更多小费等等。<br>💡 赚钱 → 装修 → 变得更强，是这条线的玩法。'}
+  ]}
+};
+let _tutBusy = false;
+function runTut(id){
+  if(!TUTS[id]) return;
+  if(state.tutorial && state.tutorial.id === id) return;
+  state.tutorial = {id:id, i:0, got:{}, steps:TUTS[id].steps};
+  renderTut();
+  SFX.ding();
+}
+function endTut(mark){
+  const tut = state.tutorial;
+  if(tut){
+    state.seenTut[tut.id] = true;
+    save();
+  }
+  state.tutorial = null;
+  $('tutLayer').classList.remove('on');
+  $('tutLayer').innerHTML = '';
+  SFX.select();
+}
+function tutEmit(key){
+  const tut = state.tutorial;
+  if(!tut || !key || !tut.steps) return;
+  tut.got[key] = true;
+  if(tut.i >= tut.steps.length){ return; }
+  const st = tut.steps[tut.i];
+  if(st && st.wait === key){
+    setTimeout(()=>{
+      if(state.tutorial && state.tutorial.id === tut.id) nextTut();
+    }, 380);
+  }
+}
+function nextTut(){
+  const tut = state.tutorial; if(!tut || !tut.steps) return;
+  if(tut.i >= tut.steps.length-1){ endTut(); return; }
+  tut.i++;
+  renderTut();
+  SFX.tap();
+}
+function checkTutorials(key){
+  if(!key || _tutBusy) return;
+  try{ tutEmit(key); }catch(e){}
+  try{
+    if(!state.running) return;
+    if(key === 'start' && state.level === 1 && !state.seenTut.L1 && !state.tutorial) runTut('L1');
+    if(key === 'cash' && !state.seenTut.cash && !state.tutorial) runTut('cash');
+    if(key === 'thief' && !state.seenTut.thief && !state.tutorial) runTut('thief');
+    if(key === 'loadbuild'){
+      const t = state.buildId ? ticketOf(state.buildId) : null;
+      if(t && !state.tutorial){
+        if(t.spec.kind === 'bread' && !state.seenTut.bread) runTut('bread');
+        if(t.spec.kind === 'tea'   && !state.seenTut.tea)   runTut('tea');
+      }
+    }
+  }catch(e){}
+  try{ renderTut(); }catch(e){}
+}
+function renderTut(){
+  const tut = state.tutorial;
+  const L = $('tutLayer');
+  if(!tut || !TUTS[tut.id]){ L.classList.remove('on'); L.innerHTML = ''; return; }
+  const def = TUTS[tut.id];
+  const st = def.steps[tut.i];
+  if(!st){ endTut(); return; }
+  if(st.tab && state.tab !== st.tab && state.running){
+    _tutBusy = true; try{ gotoTab(st.tab); }catch(e){}
+    _tutBusy = false;
+  }
+  L.innerHTML = '';
+  L.classList.add('on');
+  const stage = $('stage').getBoundingClientRect();
+  let target = null;
+  if(st.focus){
+    const el = (st.focus.charAt(0)==='#') ? $(st.focus.slice(1)) : document.querySelector(st.focus);
+    if(el && el.offsetParent !== null) target = el;
+  }
+  if(target){
+    const r = target.getBoundingClientRect();
+    const spot = mkEl('div','spot');
+    spot.style.left = (r.left - stage.left - 6)+'px';
+    spot.style.top  = (r.top - stage.top - 6)+'px';
+    spot.style.width = (r.width + 12)+'px';
+    spot.style.height = (r.height + 12)+'px';
+    L.appendChild(spot);
+  }
+  const box = mkEl('div','tut-box');
+  const ready = !st.wait || !!tut.got[st.wait];
+  box.innerHTML = '<div class="tt">🎓 '+def.title+'</div><div class="tb">'+st.say+'</div>';
+  const foot = mkEl('div','tf');
+  foot.appendChild(mkEl('span','step',(tut.i+1)+' / '+def.steps.length));
+  if(tut.i < def.steps.length-1){
+    const nb = mkEl('button','btn ok'+(ready?'':' secondary'), ready?'下一步 ▶':'先照着做 👆');
+    nb.disabled = !ready;
+    nb.onclick = ()=>{ if(ready) nextTut(); else SFX.tap(); };
+    foot.appendChild(nb);
+  }else{
+    const fb = mkEl('button','btn ok','🎉 我会了！');
+    fb.onclick = endTut;
+    foot.appendChild(fb);
+  }
+  box.appendChild(foot);
+  const sk = mkEl('div','skip','跳过教程');
+  sk.style.marginTop = '6px';
+  sk.onclick = endTut;
+  box.appendChild(sk);
+  L.appendChild(box);
+  if(target){
+    const r = target.getBoundingClientRect();
+    const tr = {l:r.left-stage.left, t:r.top-stage.top, r:r.right-stage.left, b:r.bottom-stage.top,
+                w:r.width, h:r.height};
+    const bw = box.offsetWidth, bh = box.offsetHeight, W = stage.width, H = stage.height;
+    const clampP = p => ({l:Math.max(10, Math.min(p.l, W-bw-10)), t:Math.max(8, Math.min(p.t, H-bh-10))});
+    const overlap = p => Math.max(0, Math.min(p.l+bw, tr.r)-Math.max(p.l, tr.l)) *
+                         Math.max(0, Math.min(p.t+bh, tr.b)-Math.max(p.t, tr.t));
+    // 候选位：目标下方 → 上方 → 右 → 左 → 四角；挑与操作区重叠最小的一个，尽量不挡操作
+    const cands = [
+      clampP({l:tr.l, t:tr.b+10}),
+      clampP({l:tr.l, t:tr.t-bh-10}),
+      clampP({l:tr.r+12, t:tr.t}),
+      clampP({l:tr.l-bw-12, t:tr.t}),
+      clampP({l:10, t:10}), clampP({l:W-bw-10, t:10}),
+      clampP({l:10, t:H-bh-10}), clampP({l:W-bw-10, t:H-bh-10})
+    ];
+    let best = cands[0], bestOv = Infinity;
+    // 除重点区外，还要避开货架/操作按钮等可交互元素
+    const avoid = [...document.querySelectorAll('.shelf, .action-bar, .wb-head')]
+      .filter(el=>el.offsetParent !== null)
+      .map(el=>{ const b = el.getBoundingClientRect();
+        return {l:b.left-stage.left, t:b.top-stage.top, r:b.right-stage.left, b:b.bottom-stage.top}; });
+    const ovRect = (p, q) => Math.max(0, Math.min(p.l+bw, q.r)-Math.max(p.l, q.l)) *
+                            Math.max(0, Math.min(p.t+bh, q.b)-Math.max(p.t, q.t));
+    for(const p of cands){
+      let ov = overlap(p);
+      for(const q of avoid) ov += ovRect(p, q) * 3;   // 挡住货架/按钮的候选位重罚
+      if(ov < bestOv){ bestOv = ov; best = p; }
+    }
+    box.style.left = best.l+'px';
+    box.style.top = best.t+'px';
+    // 指向箭头：按提示框相对重点区域的方位选方向，紧贴区域边缘、带弹跳动画
+    const bc = {x:best.l+bw/2, y:best.t+bh/2}, tc = {x:tr.l+tr.w/2, y:tr.t+tr.h/2};
+    let em, ax, ay;
+    if(bc.y <= tr.t){            em='👇'; ax=tc.x-14; ay=tr.t-34; }
+    else if(bc.y >= tr.b){       em='👆'; ax=tc.x-14; ay=tr.b+8; }
+    else if(bc.x >= tr.r){       em='⬅️'; ax=tr.r+8; ay=tc.y-14; }
+    else {                       em='👉'; ax=tr.l-36; ay=tc.y-14; }
+    ax = Math.max(2, Math.min(ax, W-30));
+    ay = Math.max(2, Math.min(ay, H-30));
+    const arrow = mkEl('div','tut-arrow', em);
+    arrow.style.left = ax+'px';
+    arrow.style.top = ay+'px';
+    L.appendChild(arrow);
+  }else{
+    // 无焦点步骤：放顶部居中，不挡中间的操作区
+    box.style.left = '50%';
+    box.style.top = '8px';
+    box.style.transform = 'translateX(-50%)';
+  }
+}
+
+/* ================= 我的小屋 ================= */
+const WALL_C = ['#F3E7F0','#FBF1E2','#E9EBFD','#FFF0DC'];
+const FLOOR_C = ['#EBD3BB','#DFC0A0','#CDA87F','#E6CDAE'];
+function openHome(){
+  stopAll();
+  state.running = false; state.phase = 'idle';
+  hideOverlay(); closeModal();
+  showScreen('homeScreen');
+  renderHome();
+  $('hBuffBtn').onclick = showPerks;
+  const first = !state.seenTut.home;
+  if(first){ state.seenTut.home = true; save(); runTut('home'); }
+}
+function renderHome(){
+  updateTop();
+  const room = $('roomEl');
+  const lv = state.home.wall || 0;
+  room.innerHTML = '';
+  const wall = mkEl('div','wall'); wall.style.background = WALL_C[lv % WALL_C.length];
+  const floor = mkEl('div','floor'); floor.style.background = FLOOR_C[lv % FLOOR_C.length];
+  room.appendChild(wall); room.appendChild(floor);
+  HOME_SLOTS.forEach(s=>{
+    const cur = state.home[s.id] || 0;
+    const p = s.pos;
+    const box = mkEl('div','deco-slot'+(cur?'':' empty'));
+    box.style.left = p[0]+'%'; box.style.top = p[1]+'%';
+    box.style.width = p[2]+'%'; box.style.height = p[3]+'%';
+    box.style.bottom = 'auto';
+    if(cur){
+      const em = (HOME_EMOJI[s.id]||[])[cur] || '✨';
+      box.innerHTML = '<span class="d-em" style="font-size:clamp(20px,4.6vh,40px)">'+em+'</span>';
+      box.title = s.name+' Lv'+cur+'（点一下查看详情）';
+    }else{
+      box.title = '空位：'+s.name;
+    }
+    box.onclick = ()=>openSlot(s.id);
+    room.appendChild(box);
+  });
+  // 小满站在屋里
+  const me = mkEl('div');
+  me.style.cssText = 'position:absolute;left:46%;bottom:8%;width:56px;height:96px;cursor:pointer';
+  me.innerHTML = keeperSVG(OUTFITS.find(o=>o.id===state.outfit)||OUTFITS[0]);
+  me.title = '点我换衣服';
+  me.onclick = openWardrobe;
+  room.appendChild(me);
+  renderHomeSide();
+}
+function renderHomeSide(){
+  const side = $('homeSide');
+  side.innerHTML = '';
+  HOME_SLOTS.forEach(s=>{
+    const cur = state.home[s.id] || 0;
+    const card = mkEl('div','slot-card');
+    card.innerHTML = '<h6>'+s.name+' <span class="small-note" style="font-weight:600">'+s.perk+'</span></h6>';
+    const row = mkEl('div','opts');
+    HOME_OPTS.forEach((o,i)=>{
+      if(i === 0) return;
+      const em = (HOME_EMOJI[s.id]||[])[i] || '✨';
+      const owned = cur >= i;
+      const can = state.totalMoney >= o.price;
+      const cls = owned ? (cur === i ? 'opt eq' : 'opt own') : (can ? 'opt' : 'opt no');
+      const b = mkEl('div',cls, '<span>'+em+'</span><span>Lv'+i+(owned?(cur===i?' 在用':' 已买'):' $'+o.price)+'</span>');
+      b.onclick = ()=>buyFurniture(s.id, i);
+      row.appendChild(b);
+    });
+    card.appendChild(row);
+    side.appendChild(card);
+  });
+  const tip = mkEl('div','slot-card');
+  tip.innerHTML = '<h6>💡 温馨值 '+perkSum()+'</h6><div class="small-note">家具等级越高，加成越强。点上面的按钮直接买。</div>';
+  side.appendChild(tip);
+}
+function buyFurniture(slotId, lv){
+  const s = HOME_SLOTS.find(x=>x.id===slotId);
+  if(!s) return;
+  const cur = state.home[slotId] || 0;
+  if(lv <= cur){
+    state.home[slotId] = lv; save(); SFX.select(); toast(s.name+'：换回 Lv'+lv); renderHome(); return;
+  }
+  const o = HOME_OPTS[lv];
+  if(state.totalMoney < o.price){ toast('金币不够呀，再去卖点甜品吧～','bad'); SFX.tap(); return; }
+  confirmDlg({
+    title:'买下「'+s.name+' Lv'+lv+'」？',
+    text:'花费 <b>$'+o.price+'</b>，永久获得：<b>'+s.perk+'</b>（每级都算）。<br><span class="small-note">当前 Lv'+cur+' → Lv'+lv+'</span>',
+    yes:'买！', onYes:()=>{
+      state.totalMoney -= o.price;
+      state.home[slotId] = lv;
+      save(); SFX.buy(); vibrate(30);
+      toast('🏡 '+s.name+' 升级到 Lv'+lv+'！','good');
+      renderHome();
+    }
+  });
+}
+function openSlot(slotId){
+  const s = HOME_SLOTS.find(x=>x.id===slotId);
+  const cur = state.home[slotId] || 0;
+  const box = mkEl('div','detail-box');
+  HOME_OPTS.forEach((o,i)=>{
+    const em = (HOME_EMOJI[slotId]||[])[i] || '—';
+    const bmk = i === 0 ? '空着' : em+' Lv'+i;
+    const price = i === 0 ? '免费' : '$'+o.price;
+    const val = s.fn(i);
+    const txt = i === 0 ? '没有加成' : s.perk.replace(String(s.fn(1)), String(val + (s.unit==='%'?Math.round(val*100):val)));
+    box.innerHTML += '<div class="d-row"><span class="de">'+(i===0?'·':em)+'</span><span>'+bmk+'</span><span class="dq">'+price+'</span></div>';
+  });
+  modal({
+    title:'🪑 '+s.name,
+    html:'当前 Lv<b>'+cur+'</b>　·　每级效果：<b>'+s.perk+'</b>',
+    node:box,
+    buttons:[{text:'去左边的列表购买/切换'},{text:'关闭'}]
+  });
+}
+function showPerks(){
+  const box = mkEl('div','detail-box');
+  box.innerHTML = '<h4>🏡 当前小屋加成</h4>';
+  HOME_SLOTS.forEach(s=>{
+    const lv = state.home[s.id] || 0;
+    const v = s.fn(lv);
+    const shown = s.unit === '%' ? Math.round(v*100)+'%' : (s.unit==='$' ? '$'+v : v+s.unit);
+    box.innerHTML += '<div class="d-row"><span class="de">'+((HOME_EMOJI[s.id]||[])[lv]||'·')+'</span><span>'+s.name+' Lv'+lv+'</span><span class="dq">'+shown+'</span></div>';
+  });
+  modal({title:'💗 温馨值 '+perkSum(), html:'装修会永久影响店里的表现', node:box, buttons:[{text:'知道啦'}]});
+}
+
+/* ================= 衣橱 ================= */
+function openWardrobe(){
+  autoPause();
+  const grid = mkEl('div','outfit-grid');
+  OUTFITS.forEach(o=>{
+    const owned = !!state.ownedOutfits[o.id];
+    const eq = state.outfit === o.id;
+    const can = state.totalMoney >= o.price;
+    const it = mkEl('div','outfit-item'+(eq?' eq':''),
+      '<div class="oi-p">'+keeperSVG(o)+'</div><div class="oi-n">'+o.name+'</div>'+
+      '<div class="oi-s">'+(eq?'✅ 已穿戴':owned?'点击穿戴':(can?'$'+o.price:'$'+o.price+' 不够'))+'</div>');
+    if(!owned && !can) it.style.opacity = '.55';
+    it.onclick = ()=>{
+      if(owned){
+        state.outfit = o.id; save(); drawKeeper(); SFX.select(); updateTop(); closeAutoPanel();
+        if($('roomEl') && $('homeScreen').classList.contains('on')) renderHome();
+        else setTimeout(openWardrobe, 60);
+      }else if(can){
+        confirmDlg({
+          title:o.name, text:'花 <b>$'+o.price+'</b> 买下并立刻换上？', yes:'买下穿戴',
+          onYes:()=>{
+            state.totalMoney -= o.price;
+            state.ownedOutfits[o.id] = true;
+            state.outfit = o.id;
+            save(); SFX.buy(); drawKeeper(); updateTop();
+            setTimeout(openWardrobe, 60);
+          }
+        });
+      }else{ toast('金币不够，去赚点钱再来～','bad'); SFX.tap(); }
+    };
+    grid.appendChild(it);
+  });
+  modal({title:'👗 店主衣橱', html:'💰 我的金币 <b>$'+state.totalMoney+'</b>', node:grid,
+    buttons:[{text:'关闭', action:closeAutoPanel}]});
+}
+function openShop(){ openBag(); }
+
+/* ================= 初始化 ================= */
+function bindComic(){
+  const frame = document.querySelector('.comic-frame');
+  if(frame) frame.onclick = comicNext;
+  $('comicNext').onclick = comicNext;
+  $('comicSkip').onclick = ()=>{ state.seenTut.comic = true; save(); showComic(false); openMenu(); };
+  // 电脑上也能用键盘翻页：Enter / → / 空格
+  document.addEventListener('keydown', e=>{
+    if(!$('comicScreen').classList.contains('on')) return;
+    const tag = (e.target && e.target.tagName) || '';
+    if(tag === 'BUTTON' || tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if(e.key === 'Enter' || e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Spacebar'){
+      e.preventDefault();
+      comicNext();
+    }
+  });
+}
+document.addEventListener('keydown', e=>{
+  if(!e) return;
+  const k = (e.key||'').toLowerCase();
+  const overlay = $('modalOverlay');
+  if(overlay && overlay.classList.contains('show')) return;
+  if(k === 'escape'){ if(state.running && state.phase==='playing') togglePause(); return; }
+  if(!state.running) return;
+  const map = {1:'order', 2:'build', 3:'finish', 4:'serve'};
+  if(map[k]){ gotoTab(map[k]); return; }
+  if(k === ' '){
+    const host = (state.tab === 'finish') ? $('finishBody') : $('buildBody');
+    if(host){
+      const b = host.querySelector('.pad-area > div:last-child button');
+      if(b && !b.disabled){ b.click(); if(e.preventDefault) e.preventDefault(); }
+    }
+  }
+});
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden && state.running && state.phase==='playing' && !state.paused) togglePause();
+});
+window.addEventListener('resize', ()=>{
+  if(state.tutorial) setTimeout(renderTut, 120);
+});
+function boot(){
+  const firstTime = !load();
+  drawKeeper();
+  syncSound();
+  bindComic();
+  buildTabs();
+  updateTop();
+  if(firstTime || !state.seenTut.comic){ showComic(true); }
+  else { openMenu(); }
+}
+try{ boot(); }catch(err){ console.error(err); fatal(err); }
+
+</script>
+</body>
+</html>
