@@ -332,9 +332,9 @@ body{
 .cup{
   width:clamp(60px,12vw,88px);flex:0 0 auto;position:relative;
   height:clamp(88px,17vh,124px);border:3px solid #E3D6C8;border-top:none;border-radius:6px 6px 22px 22px;
-  background:linear-gradient(#FFFFFF,#F6F1EA);overflow:hidden;touch-action:none;
+  background:linear-gradient(#FFFFFF,#F6F1EA);touch-action:none;
 }
-.cup .liq{position:absolute;left:0;right:0;bottom:0;transition:height .08s,background .2s;}
+.cup .liq{position:absolute;left:0;right:0;bottom:0;border-radius:6px 6px 19px 19px;transition:height .08s,background .2s;}
 .cup .sea{position:absolute;left:0;right:0;height:6px;background:rgba(255,255,255,.6);}
 .cup .pearl{position:absolute;bottom:6px;width:11px;height:11px;border-radius:50%;background:#3E2C23;box-shadow:inset -1px -2px 0 rgba(255,255,255,.25);}
 .cup .lid{position:absolute;top:-12px;left:-3px;right:-3px;height:14px;background:#B98055;border-radius:5px;opacity:0;transition:.2s;}
@@ -1293,7 +1293,7 @@ const LEVELS = [
   {id:1, name:'开张这一天',   time:150, target:130, kinds:['cake'],                 complex:1, pat:75, drain:0.75, gap:9.5, maxQ:4, thief:0,    thiefCd:0},
   {id:2, name:'街坊都知道了', time:145, target:180, kinds:['cake'],                 complex:2, pat:70, drain:0.82, gap:8.6, maxQ:4, thief:0,    thiefCd:0},
   {id:3, name:'面包香飘出去了',time:150, target:220, kinds:['cake','bread'],         complex:2, pat:65, drain:0.90, gap:7.8, maxQ:5, thief:0,    thiefCd:0},
-  {id:4, name:'学会找零',     time:150, target:280, kinds:['cake','bread'],         complex:2, pat:59, drain:0.95, gap:7.2, maxQ:5, thief:0,    thiefCd:0},
+  {id:4, name:'自己收钱',     time:150, target:280, kinds:['cake','bread'],         complex:2, pat:59, drain:0.95, gap:7.2, maxQ:5, thief:0,    thiefCd:0},
   {id:5, name:'奶茶上架',     time:155, target:320, kinds:['cake','bread','tea'],   complex:2, pat:55, drain:1.05, gap:6.0, maxQ:6, thief:0,    thiefCd:0},
   {id:6, name:'小心扒手',     time:150, target:390, kinds:['cake','bread','tea'],   complex:3, pat:47, drain:1.18, gap:5.2, maxQ:6, thief:.07,  thiefCd:30},
   {id:7, name:'午后高峰',     time:155, target:450, kinds:['cake','bread','tea'],   complex:3, pat:40, drain:1.20, gap:4.8, maxQ:7, thief:.09,  thiefCd:28},
@@ -1353,8 +1353,8 @@ let state = {
   combo:0, maxCombo:0, bestCombo:0, served:0, lost:0, history:[],
   ownedItems:{}, ownedOutfits:{default:true}, outfit:'default',
   levelStars:{}, home:{}, buffs:{}, seenTut:{},
-  thief:null, thiefCd:0, registerCash:0, soundOn:true,
-  till:[], tillAge:0, tillRisk:0, cash:null,
+  thief:null, thiefCd:0, tillRobber:null, registerCash:0, soundOn:true,
+  till:[], tillAge:0, tillRisk:0,
   town:{ seen:false, plays:{}, mats:{berry:0,blue:0,vanilla:0,flower:0},
          cloth:0, deco:0, fav:false, skin:null },
   timers:{}, tutorial:null
@@ -2206,13 +2206,14 @@ function dropCustomer(c, angry){
   if(el){ el.classList.add('leaving'); setTimeout(()=>el.remove(), 460); }
   const t = state.tickets.find(x=>x.cid===c.cid && x.status!=='done' && x.status!=='void');
   if(t){
-    t.status = 'void';
-    if(state.buildId === t.tid) state.buildId = null;
-    if(state.finishId === t.tid) state.finishId = null;
+    // 小票直接作废删掉：从 tickets 数组移除，并清掉所有工位引用
+    state.tickets = state.tickets.filter(x=>x !== t);
+    if(state.buildId === t.tid){ state.buildId = null; if(state.tab==='build') renderBuild(); }
+    if(state.finishId === t.tid){ state.finishId = null; if(state.tab==='finish') renderFinish(); }
     state.tray = state.tray.filter(x=>x !== t.tid);
   }
   // 保险：等不及走掉的客人，绝不给钱——作废和他相关的收银
-  if(state.cash && state.cash.cid === c.cid) state.cash = null;
+  if(t) state.till = state.till.filter(x=>x.tid !== t.tid);
   state.custs = state.custs.filter(x=>x.cid !== c.cid);
   state.lost++; state.combo = 0;
   const pen = 6;
@@ -2308,8 +2309,8 @@ function startLevel(id){
   state.custs = []; state.tickets = []; state.tray = [];
   state.buildId = null; state.finishId = null;
   state.combo = 0; state.maxCombo = 0; state.served = 0; state.lost = 0;
-  state.history = []; state.thief = null; state.registerCash = 0;
-  state.till = []; state.tillAge = 0; state.tillRisk = 0; state.cash = null;
+  state.history = []; state.thief = null; state.tillRobber = null; state.registerCash = 0;
+  state.till = []; state.tillAge = 0; state.tillRisk = 0;
   state.paused = false; state.phase = 'countdown'; state.running = true;
   state.buffs = {};
   // 小镇联动：新的一天，小镇玩法次数刷新
@@ -2396,7 +2397,7 @@ function startTimers(){
 function stopAll(){
   clearInterval(state.timers.main); clearInterval(state.timers.cust);
   clearInterval(state.timers.spawn); clearTimeout(state.timers.cd);
-  clearTimeout(state.timers.thiefT);
+  clearTimeout(state.timers.thiefT); clearInterval(state.timers.robberT);
   state.timers = {};
 }
 function countdown(done){
@@ -2456,7 +2457,7 @@ function confirmQuit(){
 function endLevel(win){
   state.running = false; state.phase = 'over';
   stopAll(); hideOverlay(); clearThief(true);
-  // 打烊时把前台没收的钱一并收走（按订单价入账，不给找零小费）
+  // 打烊时把前台没收的钱一并收走（按订单价入账）
   sweepTill();
   if(!win && state.money >= state.target) win = true;
   const total = state.served;
@@ -2511,7 +2512,7 @@ function unlockNote(nextId){
   const L = levelCfg(nextId), prev = levelCfg(nextId-1);
   const notes = [];
   (L.kinds||[]).forEach(k=>{ if(!prev.kinds.includes(k)) notes.push('🥳 解锁新品类：'+PROD[k].name); });
-  if(nextId === 4) notes.push('💵 新玩法：自己收钱找零');
+  if(nextId === 4) notes.push('💵 前台的钱要自己点收银机收');
   if(nextId === 6) notes.push('🥷 当心：小偷开始出没了');
   return notes.join('　/　');
 }
@@ -2689,6 +2690,12 @@ function overEl(x,y,el){
   if(!el) return false;
   const r = el.getBoundingClientRect();
   return x>=r.left && x<=r.right && y>=r.top && y<=r.bottom;
+}
+// 宽松版命中判定：目标四周加 pad 像素的容差，拖拽更友好
+function overElPad(x,y,el,pad){
+  if(!el) return false;
+  const r = el.getBoundingClientRect(), p = pad||16;
+  return x>=r.left-p && x<=r.right+p && y>=r.top-p && y<=r.bottom+p;
 }
 function stepChips(names, cur){
   return '<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;padding:3px 4px">' +
@@ -3421,7 +3428,7 @@ function finishTea(t, hint, stage){
   liq.style.background = 'linear-gradient(#FFF6E0,' + (base?base.color:'#A0522D') + ')';
   const milkLayer = mkEl('div','liq');
   milkLayer.style.bottom = 'auto'; milkLayer.style.top = '0';
-  milkLayer.style.height = Math.min(liq.style.height, (w.milk||0)+'%');
+  milkLayer.style.height = Math.min(parseFloat(liq.style.height)||0, (w.milk||0)) + '%';
   milkLayer.style.background = 'rgba(255,255,255,.5)';
   cup.appendChild(liq); cup.appendChild(milkLayer);
   (w.pearls||[]).slice(0,9).forEach((p,i)=>{
@@ -3470,7 +3477,7 @@ function finishTea(t, hint, stage){
   else if(step === 2){
     const row = mkEl('div'); row.style.cssText='display:flex;justify-content:center';
     const c = mkEl('div','ing','<span class="ie">🍼</span><span class="in">杯盖</span>');
-    bindDrag(c,{ghost:'🍼'},{onEnd:(x,y)=>{ if(overEl(x,y,cup)){ w.sealed = true; SFX.plop(); vibrate(20); checkTutorials('straw'); renderFinish(); } }});
+    bindDrag(c,{ghost:'🍼'},{onEnd:(x,y)=>{ if(overElPad(x,y,cup)){ w.sealed = true; SFX.plop(); vibrate(20); toast('封口成功 🍼','good'); checkTutorials('straw'); renderFinish(); } else toast('要把<b>杯盖</b>拖到杯子上才算封口哦','warn'); }});
     row.appendChild(c);
     stages.appendChild(row);
     stages.appendChild(mkEl('div','swipe-hint','👉 把<b>杯盖拖</b>到杯口'));
@@ -3478,7 +3485,7 @@ function finishTea(t, hint, stage){
   else if(step === 3){
     const row = mkEl('div'); row.style.cssText='display:flex;justify-content:center';
     const c = mkEl('div','ing','<span class="ie">🥤</span><span class="in">吸管</span>');
-    bindDrag(c,{ghost:'🥤'},{onEnd:(x,y)=>{ if(overEl(x,y,cup)){ w.straw = true; SFX.plop(); vibrate(20); checkTutorials('send'); renderFinish(); } }});
+    bindDrag(c,{ghost:'🥤'},{onEnd:(x,y)=>{ if(overElPad(x,y,cup)){ w.straw = true; SFX.plop(); vibrate(20); toast('插上吸管 🥤','good'); checkTutorials('send'); renderFinish(); } else toast('要把<b>吸管</b>拖到杯子里哦','warn'); }});
     row.appendChild(c);
     stages.appendChild(row);
     stages.appendChild(mkEl('div','swipe-hint','👉 把<b>吸管拖</b>进去'));
@@ -3493,7 +3500,7 @@ function sweetName(n){
 
 
 /* ================= 出餐收银 ================= */
-function tillTotal(){ return (state.till||[]).reduce((a,x)=>a+x.paid,0); }
+function tillTotal(){ return (state.till||[]).reduce((a,x)=>a+x.pay,0); }
 function serveBadge(){
   if(state.thief) return '🥷';
   const tt = tillTotal();
@@ -3572,15 +3579,9 @@ function serveNow(t){
   state.history.push({pct:g.pct, pay:pay, no:t.no, kind:t.spec.kind});
 
   // 客人取走甜品，把钱放在前台就走——钱要等店长去收银机收
-  let paid = pay, due = 0;
-  if(state.level >= 4){
-    const bills = [20,50,100,200];
-    paid = bills.find(b=>b >= pay) || 200;
-    if(chance(.35)){ const i = bills.indexOf(paid); if(i>=0 && i < bills.length-1) paid = bills[i+1]; }
-    due = paid - pay;
-  }
-  state.till.push({tid:t.tid, pay:pay, paid:paid, due:due, no:t.no});
+  state.till.push({tid:t.tid, pay:pay, no:t.no});
   state.registerCash = tillTotal();
+  checkTutorials('cash');
 
   checkTutorials('served');
   t.status = 'done';
@@ -3612,137 +3613,123 @@ function finishCustomer(cid, g){
 /* ---- 前台收钱：客人把钱放在收银台就走，店长点收银机才入账 ---- */
 function collectTill(){
   if(!canPlay()) return;
-  if(state.cash){ toast('先把手上这单找零送出去～','warn'); SFX.tap(); return; }
   const tt = tillTotal();
   if(tt <= 0){ toast('前台暂时没有钱要收','warn'); SFX.tap(); return; }
-  // 不用找零的直接一起收走
-  const plain = state.till.filter(x=>!x.due);
-  const dueItem = state.till.find(x=>x.due > 0) || null;
-  state.till = state.till.filter(x=>x.due > 0);
-  if(plain.length){
-    const got = plain.reduce((a,x)=>a+x.pay,0);
-    state.money += got; state.totalMoney += got;
-    SFX.kaching();
-    fx($('serveScene'),'coin-fx','💰', 200, 70);
-    toast('💵 收进前台的钱 +$'+got+(plain.length>1?'（'+plain.length+' 单一起收）':''),'good');
-  }
-  state.registerCash = tillTotal();
+  const n = state.till.length;
+  state.money += tt; state.totalMoney += tt;
+  state.till = []; state.registerCash = 0; state.tillAge = 0; state.tillRisk = 0;
+  SFX.kaching();
+  fx($('serveScene'),'coin-fx','💰', 200, 70);
+  toast('💵 收进前台的钱 +$'+tt+(n>1?'（'+n+' 单一起收）':''),'good');
   updateTop(); renderServe(); renderRail(); save();
   checkTutorials('collected');
   checkWin();
-  // 有付整钱的，接着处理找零
-  if(dueItem) setTimeout(()=>{ if(state.running && !state.cash) openCash(dueItem); }, 350);
 }
 function checkWin(){
   if(state.running && state.phase === 'playing' && state.money >= state.target){
     setTimeout(()=>{ if(state.running) endLevel(true); }, 700);
   }
 }
-/* 前台现金放太久被小偷偷走：整堆清空 */
+/* 前台现金放太久会引来小偷：他会先现身在收银台，点他就能赶跑，倒计时结束才会把钱偷走 */
 function robTill(){
   const pile = tillTotal();
   if(pile <= 0){ state.tillAge = 0; state.tillRisk = 0; return; }
+  if(state.tillRobber || state.thief) return;
+  state.tillRobber = {t:0, limit:6, hits:0, max:3};
+  state.tillAge = 0; state.tillRisk = 0;
+  SFX.thief(); SFX.alarm();
+  toast('🥷 小偷摸到收银台了！快<b>连点他 3 下</b>把他赶跑！','bad');
+  tabBadge('serve','🥷');
+  showTillRobber();
+  clearInterval(state.timers.robberT);
+  state.timers.robberT = setInterval(()=>{
+    if(!state.running || state.paused){ return; }
+    const r = state.tillRobber; if(!r){ clearInterval(state.timers.robberT); return; }
+    // 钱已经被收走了，小偷空手溜走
+    if(tillTotal() <= 0){
+      state.tillRobber = null; clearInterval(state.timers.robberT); hideTillRobber(true);
+      toast('💰 钱已经收好了，小偷空手溜走了','good');
+      return;
+    }
+    r.t += .1;
+    if(r.t >= r.limit){
+      state.tillRobber = null; clearInterval(state.timers.robberT); hideTillRobber();
+      stealTill(); return;
+    }
+    const bar = document.querySelector('.till-robber .thpf');
+    if(bar) bar.style.width = Math.max(0,(1 - r.t/r.limit)*100)+'%';
+  }, 100);
+}
+function showTillRobber(){
+  hideTillRobber(true);
+  const st = $('stage'); if(!st) return;
+  const r = state.tillRobber;
+  const el = mkEl('div','thief till-robber');
+  el.innerHTML = '<div class="tb">🥷</div>'+
+    '<div class="thp"><div class="thpf" style="width:100%"></div></div>'+
+    '<div style="font-size:9px;font-weight:800;color:#FF3D3D;background:#fff;border-radius:6px">点我！还剩 '+
+    (r.max - r.hits)+' 下</div>';
+  el.style.right = '5%'; el.style.bottom = '20%';
+  el.onclick = tillRobberHit;
+  st.appendChild(el);
+  const oldA = st.querySelector('.alarm');
+  if(!oldA) st.appendChild(mkEl('div','alarm','🥷 小偷在掏收银台！快点击他！'));
+}
+function hideTillRobber(instant){
+  const el = document.querySelector('.till-robber');
+  if(el){
+    if(instant){ el.remove(); }
+    else { const tb = el.querySelector('.tb'); if(tb) tb.classList.add('run'); setTimeout(()=>el.remove(), 800); }
+  }
+  const a = document.querySelector('.alarm');
+  if(a && a.textContent.indexOf('收银台') >= 0) a.remove();
+}
+function tillRobberHit(){
+  const r = state.tillRobber; if(!r || !canPlay()) return;
+  r.hits++;
+  SFX.plop(); vibrate(20);
+  const tb = document.querySelector('.till-robber .tb');
+  if(tb){ tb.classList.add('hit'); setTimeout(()=>tb.classList.remove('hit'), 210); }
+  const tag = document.querySelector('.till-robber div:last-child');
+  if(tag && r.hits < r.max) tag.textContent = '点我！还剩 '+(r.max - r.hits)+' 下';
+  if(r.hits >= r.max){
+    state.tillRobber = null;
+    clearInterval(state.timers.robberT);
+    hideTillRobber();
+    SFX.kaching();
+    toast('👊 赶跑了小偷！前台的钱保住了','good');
+    state.tillAge = 0; state.tillRisk = 0;
+    save();
+  }
+}
+/* 小偷得手：把前台现金整堆偷走 */
+function stealTill(){
+  const pile = tillTotal();
   state.till = []; state.registerCash = 0; state.tillAge = 0; state.tillRisk = 0;
   SFX.thief(); SFX.lose();
-  toast('🥷 前台的 $'+pile+' 被小偷偷走了！记得及时收钱','bad');
+  toast('🥷 前台的 $'+pile+' 被小偷偷走了！下次看到他出现要快点他','bad');
   const cc = $('counterCash');
   if(cc){ cc.classList.add('robbed'); setTimeout(()=>cc.classList.remove('robbed'), 2400); }
   fx(null,'float-tx','🥷 偷钱！');
   updateTop(); renderServe(); renderRail();
 }
-/* 打烊：前台没收的钱按订单价一并入账（不给找零小费） */
+/* 打烊：前台没收的钱按订单价一并入账 */
 function sweepTill(){
   let got = 0;
   (state.till||[]).forEach(x=>{ got += x.pay; });
-  if(state.cash){ got += state.cash.pay; state.cash = null; }
   if(got > 0){
     state.money += got; state.totalMoney += got;
     state.till = []; state.registerCash = 0;
   }
 }
 
-/* ---- 收银找零 ---- */
-function openCash(item){
-  state.till = state.till.filter(x=>x !== item);
-  state.registerCash = tillTotal();
-  state.cash = {tid:item.tid, cid:0, pay:item.pay, paid:item.paid, due:item.due, given:0, typed:''};
-  checkTutorials('cash');
-  renderServe();
-}
+/* ---- 收银面板 ---- */
 function renderCash(){
   const p = $('cashPanel'); if(!p) return;
   p.innerHTML = '';
-  const c = state.cash;
-  if(!c){
-    p.appendChild(mkEl('div','small-note','💵 客人把钱放在<b>前台</b>就走啦，点一下收银机把钱收进腰包。'));
-    p.appendChild(mkEl('div','','<div style="font-size:34px;text-align:center;opacity:.5;margin-top:6px">🧾💵</div>'));
-    p.appendChild(mkEl('div','small-note','第 4 关起顾客会付整钱，收钱时要在这里<b>找零</b>哦。'));
-    return;
-  }
-  const scr = mkEl('div','cash-screen',
-    '<div class="row"><span>这单</span><span class="hi">$'+c.pay+'</span></div>' +
-    '<div class="row"><span>顾客给了</span><span>$'+c.paid+'</span></div>' +
-    '<div class="row"><span>要找零</span><span class="hi">$'+c.due+'</span></div>' +
-    '<div class="row"><span>已放钱</span><span>$'+c.given+'</span></div>');
-  p.appendChild(scr);
-  const quick = mkEl('div','paid-row');
-  [1,5,10,20,50].forEach(n=>{
-    const b = mkEl('div','note-item','+'+n);
-    b.onclick = ()=>{
-      if(!canPlay()) return;
-      c.given += n; c.typed = String(c.given);
-      SFX.coin(); vibrate(12); renderCash();
-    };
-    quick.appendChild(b);
-  });
-  p.appendChild(quick);
-  const kp = mkEl('div','keypad');
-  [1,2,3,4,5,6,7,8,9].forEach(n=>{
-    const b = mkEl('button','pkey', String(n));
-    b.onclick = ()=>{
-      if(!canPlay()) return;
-      if(c.typed.length < 3) c.typed += String(n);
-      c.given = parseInt(c.typed || '0', 10);
-      SFX.tap(); renderCash();
-    };
-    kp.appendChild(b);
-  });
-  const b0 = mkEl('button','pkey','0');
-  b0.onclick = ()=>{ if(!canPlay()) return; if(c.typed.length<3) c.typed += '0'; c.given=parseInt(c.typed||'0',10); SFX.tap(); renderCash(); };
-  const bc = mkEl('button','pkey','↺');
-  bc.onclick = ()=>{ if(!canPlay()) return; c.typed=''; c.given=0; SFX.tap(); renderCash(); };
-  const bo = mkEl('button','pkey wide','✅ 送出');
-  bo.style.cssText = 'background:linear-gradient(#FFF0F5,#FFD9E4);color:#D6336C';
-  bo.onclick = ()=>settleCash();
-  kp.appendChild(bc); kp.appendChild(b0); kp.appendChild(bo);
-  p.appendChild(kp);
-  p.appendChild(mkEl('div','small-note','按上面的金额按键，凑够找零再按「送出」'));
-}
-function settleCash(){
-  if(!canPlay() || !state.cash) return;
-  const c = state.cash;
-  // 找零送出，这一单的钱才真正入账
-  state.money += c.pay; state.totalMoney += c.pay;
-  const right = c.given === c.due;
-  if(right){
-    const tip = 2 + Math.floor(Math.random()*3);
-    state.money += tip; state.totalMoney += tip;
-    SFX.kaching();
-    toast('✅ 找零正确！顾客留下 $'+tip+' 小费','good');
-    fx($('serveScene'),'coin-fx','🪙', 200, 70);
-  }else{
-    const off = Math.abs(c.given - c.due);
-    const pen = Math.min(state.money, 3 + off);
-    state.money -= pen; state.totalMoney = Math.max(0, state.totalMoney - pen);
-    SFX.bad();
-    toast((c.given < c.due ? '找少了 $'+off : '找多了 $'+off)+'！赔了 $'+pen,'bad');
-  }
-  state.cash = null;
-  state.registerCash = tillTotal();
-  save(); updateTop(); renderServe(); renderRail();
-  checkTutorials('cashdone');
-  checkTutorials('collected');
-  checkWin();
+  p.appendChild(mkEl('div','small-note','💵 客人把钱放在<b>前台</b>就走啦，点一下收银机把钱收进腰包。'));
+  p.appendChild(mkEl('div','','<div style="font-size:34px;text-align:center;opacity:.5;margin-top:6px">🧾💵</div>'));
+  p.appendChild(mkEl('div','small-note','⚠️ 钱放太久会引来小偷，他会现身几秒——<b>连点他</b>就能赶跑！'));
 }
 
 /* ---- 小偷 ---- */
@@ -3815,7 +3802,9 @@ function thiefEscape(){
 }
 function clearThief(force){
   clearInterval(state.timers.thiefT);
+  clearInterval(state.timers.robberT);
   if(state.thief && force) state.thief = null;
+  if(force) state.tillRobber = null;
   const old = document.querySelector('.thief'); if(old) old.remove();
   const old2 = document.querySelector('.alarm'); if(old2) old2.remove();
 }
@@ -3853,7 +3842,7 @@ const TUTS = {
     {say:'最后把<b>装饰拖</b>到蛋糕顶上摆好。小票写「不要装饰」时就一个都别放；<br>摆错或放多了，<b>点一下</b>那个装饰就能拿走。', focus:'.cake-wrap', wait:'top'},
     {say:'完工！点 <b>✅ 做好啦，放到出餐口</b>。', wait:'totray'},
     {say:'成品已经放到出餐口了！<b>客人会自己走过来取</b>。切到 💰 <b>出餐收银</b> 看看吧。', focus:'#tabs', wait:'goserve'},
-    {say:'客人取到甜品，把钱<b>放在前台</b>就走啦。<br>点一下 💵 <b>收银机</b>，把钱收进腰包。<br>⚠️ 钱一直堆在前台不放，会有小概率被小偷偷走，要及时收！<br>客人头顶的耐心条走完会生气走人，别让人干等太久。', focus:'#counterCash', tab:'serve', wait:'collected'},
+    {say:'客人取到甜品，把钱<b>放在前台</b>就走啦。<br>点一下 💵 <b>收银机</b>，把钱收进腰包。<br>⚠️ 钱堆在前台太久会引来小偷——他会现身几秒，<b>连点他</b>就能赶跑，来不及才会被偷走！还是要及时收钱。<br>客人头顶的耐心条走完会生气走人，别让人干等太久。', focus:'#counterCash', tab:'serve', wait:'collected'},
     {say:'整套流程就是这样！<br>连续做对会攒<b>连击加成</b>，抹面/火候/水位这些「手感」也会算进评分。<br>在时间结束前赚够目标金额就能过关——开店去吧 💛'}
   ]},
   bread:{title:'🥖 新品类：面包', steps:[
@@ -3871,8 +3860,8 @@ const TUTS = {
     {say:'珍珠之类的配料要<b>一颗一颗点</b>进去，数量必须和小票一致，点完按「加料完成」。', wait:'send'},
     {say:'最后去<b>精加工台</b>：选糖度 → 在杯子上<b>左右滑动</b>摇匀 → 把<b>杯盖</b>和<b>吸管</b>拖上去。<br>做完照样点「放到出餐口」。'}
   ]},
-  cash:{title:'💵 新玩法：自己收钱', steps:[
-    {say:'顾客赶时间，把<b>整钱</b>拍在前台就走啦。<br>点一下 💵 <b>收银机</b> 收钱：屏幕上写着<b>「要找零」</b>的金额，用下面的<b>数字按键</b>输入，或点上面的快捷金额累加，凑够后按 <b>✅ 送出</b>。<br>找对了有额外小费，找错了要赔钱。', focus:'#cashPanel', wait:'cashdone'}
+  cash:{title:'💵 自己收钱', steps:[
+    {say:'顾客把<b>钱放在前台</b>就走啦。<br>点一下 💵 <b>收银机</b>，把前台的钱收进腰包——记得及时收，堆太久会引来小偷哦！', focus:'#counterCash', tab:'serve', wait:'collected'}
   ]},
   thief:{title:'🥷 当心小偷', steps:[
     {say:'🥷 有小偷盯上收银台了！<br>切到<b>出餐收银</b>工位，<b>连点他几下</b>就能按倒，抓到还有奖金。<br>限时内没抓住，会被偷走一笔钱。<br>💡 在家里买「伙伴」家具可以降低他来的概率。', focus:'#serveScene', wait:'caught'}
@@ -3929,7 +3918,7 @@ function checkTutorials(key){
   try{
     if(!state.running) return;
     if(key === 'start' && state.level === 1 && !state.seenTut.L1 && !state.tutorial) runTut('L1');
-    if(key === 'cash' && !state.seenTut.cash && !state.tutorial) runTut('cash');
+    if(key === 'cash' && state.level >= 4 && !state.seenTut.cash && !state.tutorial) runTut('cash');
     if(key === 'thief' && !state.seenTut.thief && !state.tutorial) runTut('thief');
     if(key === 'loadbuild'){
       const t = state.buildId ? ticketOf(state.buildId) : null;
@@ -4609,27 +4598,109 @@ GAMES.market = (body, api)=>{
   });
 };
 
-/* 2. 奶油裱花 */
+/* 2. 奶油裱花（多种样式随机轮换） */
 GAMES.piping = (body, api)=>{
   api.time(24); api.max=10;
-  const pts=[];
-  for(let i=0;i<=40;i++){
-    const a = -Math.PI/2 + i/40*Math.PI*2.4;
-    const r = 104 - i*2.2;
-    pts.push([200+Math.cos(a)*r, 158+Math.sin(a)*r*.78]);
+  const CX=200, CY=160, N=41;
+  // 每种样式都生成 N 个点（从起笔到收笔的一条路径）
+  const PATTERNS = [
+    {name:'玫瑰卷', gen:()=>{
+      const pts=[];
+      for(let i=0;i<N;i++){
+        const a = -Math.PI/2 + i/(N-1)*Math.PI*2.4;
+        const r = 104 - i*2.2;
+        pts.push([CX+Math.cos(a)*r, CY+Math.sin(a)*r*.78]);
+      }
+      return pts;
+    }},
+    {name:'爱心', gen:()=>{
+      const pts=[];
+      for(let i=0;i<N;i++){
+        const t = i/(N-1)*Math.PI*2;
+        const x = 16*Math.pow(Math.sin(t),3);
+        const y = 13*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t);
+        pts.push([CX + x*7.4, CY - 8 - y*7.4]);
+      }
+      return pts;
+    }},
+    {name:'五角星', gen:()=>{
+      const pts=[], V=10, R=118, r=50;
+      const vs=[];
+      for(let i=0;i<V;i++){
+        const a = -Math.PI/2 + i*Math.PI/5;
+        const rad = i%2===0 ? R : r;
+        vs.push([CX+Math.cos(a)*rad, CY+Math.sin(a)*rad]);
+      }
+      for(let i=0;i<N;i++){
+        const seg = Math.floor(i/(N-1)*V) % V;
+        const f = (i/(N-1)*V) % 1;
+        const a2 = vs[seg], b2 = vs[(seg+1)%V];
+        pts.push([a2[0]+(b2[0]-a2[0])*f, a2[1]+(b2[1]-a2[1])*f]);
+      }
+      return pts;
+    }},
+    {name:'波浪线', gen:()=>{
+      const pts=[];
+      for(let i=0;i<N;i++){
+        const t = i/(N-1);
+        const x = 66 + t*268;
+        const y = CY + Math.sin(t*Math.PI*3)*44;
+        pts.push([x,y]);
+      }
+      return pts;
+    }},
+    {name:'五瓣花', gen:()=>{
+      const pts=[];
+      for(let i=0;i<N;i++){
+        const a = i/(N-1)*Math.PI*2;
+        const r = 102*Math.sin(2.5*a);
+        pts.push([CX+Math.cos(a)*r, CY+Math.sin(a)*r*.92]);
+      }
+      return pts;
+    }},
+    {name:'锯齿花边', gen:()=>{
+      const pts=[];
+      for(let i=0;i<N;i++){
+        const t = i/(N-1);
+        const x = 66 + t*268;
+        const tri = Math.abs(((t*6)%1)-0.5)*2*2-1; // 三角波
+        pts.push([x, CY + tri*52]);
+      }
+      return pts;
+    }}
+  ];
+  const pat = pick(PATTERNS);
+  const pts = pat.gen();
+  const cps = [0,4,8,12,16,20,24,28,32,36].map(i=>pts[Math.min(i, N-1)]);
+  // 行笔方向箭头：相邻两个圆点之间各放一个小箭头，表示挤奶油的顺序方向
+  let arrows = '';
+  for(let i=0;i<cps.length-1;i++){
+    const a = pts[Math.min(i*4+2, N-1)], b = pts[Math.min(i*4+6, N-1)];
+    const ang = Math.atan2(b[1]-a[1], b[0]-a[0]) * 180/Math.PI;
+    arrows += '<polygon points="-7,-5 7,0 -7,5" fill="#F09CB4" opacity=".75" transform="translate('+
+      a[0].toFixed(1)+','+a[1].toFixed(1)+') rotate('+ang.toFixed(1)+')"/>';
   }
-  const cps = [0,4,8,12,16,20,24,28,32,36].map(i=>pts[i]);
+  // 起笔标记：绿圈 + 绿箭头 + 「起笔」标签
+  const s0 = pts[0], s1 = pts[2];
+  const sang = Math.atan2(s1[1]-s0[1], s1[0]-s0[0]) * 180/Math.PI;
+  const startMark =
+    '<circle cx="'+s0[0].toFixed(1)+'" cy="'+s0[1].toFixed(1)+'" r="15" fill="none" stroke="#5FBF6E" stroke-width="3" stroke-dasharray="5 4"/>'+
+    '<polygon points="-9,-6 9,0 -9,6" fill="#5FBF6E" opacity=".9" transform="translate('+
+      (s0[0]+Math.cos(sang*Math.PI/180)*24).toFixed(1)+','+(s0[1]+Math.sin(sang*Math.PI/180)*24).toFixed(1)+') rotate('+sang.toFixed(1)+')"/>'+
+    '<text x="'+s0[0].toFixed(1)+'" y="'+(s0[1]-24).toFixed(1)+'" text-anchor="middle" font-size="13" font-weight="800" fill="#3E9B4D">✏️ 起笔</text>';
   body.innerHTML = '<div class="mini-play piping-play"><svg viewBox="0 0 400 320" id="pSVG">'+
     '<circle cx="200" cy="160" r="126" fill="#FFF3E2" stroke="#F3CDD6" stroke-width="7"/>'+
     '<circle cx="200" cy="160" r="112" fill="#FFFDF6" opacity=".55"/>'+
-    '<polyline points="'+pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')+'" fill="none" stroke="#F7CFDB" stroke-width="15" stroke-linecap="round" stroke-dasharray="2 13"/>'+
+    '<polyline points="'+pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')+'" fill="none" stroke="#F7CFDB" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 13"/>'+
+    arrows + startMark +
     cps.map(p=>'<circle class="cp" cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="8" fill="#FFD9E4" stroke="#F09CB4" stroke-width="2"/>').join('')+
-    '<polyline id="pTrace" fill="none" stroke="#FF7FA3" stroke-width="11" stroke-linecap="round" points=""/>'+
-    '</svg><div class="mini-help">按住拖动，沿着虚线挤奶油，经过每一个小圆点</div></div>';
-  const svg = body.querySelector('#pSVG'), trace = body.querySelector('#pTrace'), dots = svg.querySelectorAll('.cp');
+    cps.map((p,i)=>'<text class="cpn" x="'+p[0].toFixed(1)+'" y="'+p[1].toFixed(1)+'" text-anchor="middle" dominant-baseline="central" font-size="9" font-weight="800" fill="#B44B66" pointer-events="none">'+(i+1)+'</text>').join('')+
+    '<polyline id="pTrace" fill="none" stroke="#FF7FA3" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" points=""/>'+
+    '</svg><div class="mini-help">本次样式「'+pat.name+'」：从<b>绿圈 ✏️ 起笔</b>处按住下笔，按<b>数字 1→10</b> 的顺序、顺着粉色<b>箭头方向</b>拖动，经过每一个小圆点</div></div>';
+  const svg = body.querySelector('#pSVG'), trace = body.querySelector('#pTrace'), dots = svg.querySelectorAll('.cp'), nums = svg.querySelectorAll('.cpn');
   let idx=0, drawing=false;
   const path=[];
-  api.hud('🎂 裱花 0/10');
+  api.hud('🎂 裱花·'+pat.name+' 0/10');
   const toSvg = e=>{ const r=svg.getBoundingClientRect(); return [(e.clientX-r.left)/r.width*400, (e.clientY-r.top)/r.height*320]; };
   function draw(e){
     if(!drawing) return;
@@ -4640,7 +4711,8 @@ GAMES.piping = (body, api)=>{
     if(c && Math.hypot(x-c[0], y-c[1]) < 27){
       dots[idx].setAttribute('fill','#FF7FA3');
       dots[idx].setAttribute('r','12');
-      idx++; api.score(idx); api.hud('🎂 裱花 '+idx+'/10');
+      if(nums[idx]) nums[idx].setAttribute('fill','#FFF3E2');
+      idx++; api.score(idx); api.hud('🎂 裱花·'+pat.name+' '+idx+'/10');
       SFX.good();
       if(idx >= cps.length) setTimeout(()=>api.end(), 430);
     }
