@@ -327,6 +327,11 @@ body{
 .gauge .fill.milk{background:linear-gradient(#FFF6E0,#F0DFA8);}
 .gauge .zone{position:absolute;left:0;right:0;border-top:2px dashed rgba(46,139,98,.75);border-bottom:2px dashed rgba(46,139,98,.75);
   background:rgba(90,224,106,.16);}
+/* 绿区中央的金色「完美档」窄带：落在里面额外给小费 */
+.gauge .zone-pf{position:absolute;left:0;right:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(255,206,84,.45),rgba(255,160,36,.8),rgba(255,206,84,.45));
+  border-top:1px solid rgba(255,158,20,.9);border-bottom:1px solid rgba(255,158,20,.9);}
+.gauge-glow.pf{border-color:#F0A93B;box-shadow:0 0 0 3px rgba(255,196,64,.6),inset 0 0 8px rgba(0,0,0,.1);}
 .gauge .tick-l{position:absolute;right:2px;font-size:9px;font-weight:800;color:#8B6543;transform:translateY(-50%);}
 .gauge-glow{border-color:#5AE06A;box-shadow:0 0 0 3px rgba(90,224,106,.5),inset 0 0 8px rgba(0,0,0,.1);}
 .cup{
@@ -407,6 +412,15 @@ body{
 .counter-cash{cursor:pointer;user-select:none;}
 .counter-cash.has{background:linear-gradient(#FFF3B8,#FFE47A);border-color:#E8B84A;color:#7A5A00;animation:tillPulse 1s infinite;}
 @keyframes tillPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,190,60,.55)}50%{box-shadow:0 0 0 7px rgba(255,190,60,0)}}
+/* 前台嫌疑度条：钱堆得越久，条越满、越红，满格才会真招来小偷 */
+.counter-cash{flex-wrap:wrap;}
+.counter-cash .riskwrap{position:absolute;left:6px;right:6px;bottom:2px;height:4px;border-radius:2px;
+  background:rgba(0,0,0,.10);overflow:hidden;display:none;}
+.counter-cash .riskwrap.on{display:block;}
+.counter-cash .riskwrap i{display:block;height:100%;width:0;border-radius:2px;
+  background:linear-gradient(90deg,#F7C948,#F08C2E,#E8452B);transition:width .12s linear;}
+.counter-cash.danger{animation:tillDanger .5s infinite;border-color:#E8452B;}
+@keyframes tillDanger{0%,100%{box-shadow:0 0 0 0 rgba(232,69,43,.5)}50%{box-shadow:0 0 0 8px rgba(232,69,43,0)}}
 
 /* ============ 家园 ============ */
 #homeScreen{background:linear-gradient(180deg,#EDE4FF,#F7E9F3);}
@@ -682,8 +696,12 @@ body{
 .tray-title{color:#C08A5E;}
 .tray-card{border:2px solid #FFD3DE;box-shadow:0 4px 0 rgba(232,93,117,.16),0 6px 12px rgba(232,93,117,.18);}
 .cash-panel{background:linear-gradient(#FFF9F0,#FFF0DC);border-left:4px solid #F3C9D3;}
-.counter-cash{background:linear-gradient(#FFF6E6,#FFEDD2);border:3px solid #EFD3A0;color:#7A4E33;}
+.counter-cash{background:linear-gradient(#FFF6E6,#FFEDD2);border:3px solid #EFD3A0;color:#7A4E33;padding-bottom:8px;}
 .counter-cash.has{background:linear-gradient(#FFE9A0,#FFD666);border-color:#E8B84A;color:#7A5A00;}
+/* 嫌疑度过半：整块收银机泛红警示，条子也变粗好认 */
+.counter-cash.has.danger{background:linear-gradient(#FFD3D3,#FFB0A6);border-color:#E8452B;color:#8C1F10;
+  animation:tillDanger .5s infinite;}
+.counter-cash .riskwrap{height:6px;bottom:1px;background:rgba(120,60,20,.18);}
 .counter-cash.robbed{background:#FFDCDC;border-color:#FF3D3D;color:#C00;}
 .note-item{background:linear-gradient(#E7F7D9,#C8EDAF);border:2px solid #96D47A;box-shadow:0 3px 0 #96D47A;}
 
@@ -1083,7 +1101,7 @@ body{
           <div class="tray-zone">
             <div class="tray-title">🧺 出餐口 <span class="small-note" id="trayNote">做好的成品会放在这里</span></div>
             <div class="tray-row" id="trayRow"></div>
-            <div class="counter-cash" id="counterCash" onclick="collectTill()" title="把客人留在前台的钱收进腰包">💵 收银机 <b id="registerCash">0</b><span id="tillHint"></span></div>
+            <div class="counter-cash" id="counterCash" onclick="collectTill()" title="把客人留在前台的钱收进腰包">💵 收银机 <b id="registerCash">0</b><span id="tillHint"></span><span class="riskwrap" id="tillRiskWrap"><i id="tillRiskFill"></i></span></div>
           </div>
           <div class="cash-panel" id="cashPanel"></div>
         </div>
@@ -1354,7 +1372,8 @@ let state = {
   ownedItems:{}, ownedOutfits:{default:true}, outfit:'default',
   levelStars:{}, home:{}, buffs:{}, seenTut:{},
   thief:null, thiefCd:0, tillRobber:null, registerCash:0, soundOn:true,
-  till:[], tillAge:0, tillRisk:0,
+  till:[], tillAge:0, tillRisk:0, pendingSig:null,
+  stats:{ lostN:0, lostMoney:0, badN:0, badMoney:0, robbed:0, pfN:0, signal:0 },
   town:{ seen:false, plays:{}, mats:{berry:0,blue:0,vanilla:0,flower:0},
          cloth:0, deco:0, fav:false, skin:null },
   timers:{}, tutorial:null
@@ -2215,7 +2234,12 @@ function dropCustomer(c, angry){
   // 保险：等不及走掉的客人，绝不给钱——作废和他相关的收银
   if(t) state.till = state.till.filter(x=>x.tid !== t.tid);
   state.custs = state.custs.filter(x=>x.cid !== c.cid);
-  state.lost++; state.combo = 0;
+  // 连击不再一刀清零：等不及走掉只折损一半，留住「追求连击」的动力
+  state.lost++; state.combo = Math.floor((state.combo || 0) / 2);
+  if(state.stats){
+    state.stats.lostN++;
+    state.stats.lostMoney += (t ? t.price : 0);
+  }
   const pen = 6;
   state.money = Math.max(0, state.money - pen);
   state.totalMoney = Math.max(0, state.totalMoney - pen);
@@ -2313,14 +2337,19 @@ function startLevel(id){
   state.till = []; state.tillAge = 0; state.tillRisk = 0;
   state.paused = false; state.phase = 'countdown'; state.running = true;
   state.buffs = {};
+  // 打烊结算的分项统计
+  state.stats = { lostN:0, lostMoney:0, badN:0, badMoney:0, robbed:0, pfN:0, signal:0 };
   // 小镇联动：新的一天，小镇玩法次数刷新
   state.town.plays = {};
-  // 自动取 1 份优质食材做「今日特供」
-  const _mk = ['berry','blue','vanilla','flower'].find(k=>(state.town.mats[k]||0) > 0);
-  if(_mk){
-    state.town.mats[_mk]--;
-    state.buffs.fresh = .12;
-    setTimeout(()=>toast('🧺 今日特供：用了 1 份'+MAT_INFO[_mk].name+'，小费 +12%','good'), 1500);
+  // 今日主打：开店前用 1 份优质食材选定今日主打品类，这一类小费 +12%
+  if(state.pendingSig){
+    const ps = state.pendingSig;
+    if((state.town.mats[ps.mat] || 0) > 0){
+      state.town.mats[ps.mat]--;
+      state.buffs.sig = {kind:ps.kind, mat:ps.mat, mult:.12};
+      setTimeout(()=>toast('🧺 今日主打：'+PROD[ps.kind].name+' · 这一类小费 +12%','good'), 1500);
+    }
+    state.pendingSig = null;
   }
   // 顾客心愿的偏爱加成
   if(state.town.fav){ state.buffs.fav = true; state.town.fav = false; }
@@ -2373,19 +2402,21 @@ function startTimers(){
       if(t.wait >= 1) serveNow(t);
     });
     maybeThief(L);
-    // 前台现金堆：放得越久越容易被小偷偷走
+    // 前台现金堆：放得越久，嫌疑度涨得越快，满格才会真招来小偷
     if(!state.tutorial){
       if(state.till.length){
         state.tillAge += .1;
         if(state.tillAge > 8){
-          state.tillRisk = (state.tillRisk || 0) + .1;
+          // 8 秒宽限后每秒攒 5%（第 10 关 8.5%）嫌疑度，攒满 → 小偷现身，仍有 6 秒反应窗口
+          const rate = Math.min(.085, .05 + .004 * ((state.level||1) - 1));
+          state.tillRisk = Math.min(1, (state.tillRisk || 0) + rate * .1);
           if(state.tillRisk >= 1){
             state.tillRisk = 0;
-            const p = Math.min(.09, .015 + (state.tillAge - 8) * .004);
-            if(Math.random() < p) robTill();
+            if(!state.tillRobber && !state.thief) robTill();
           }
         }
       }else{ state.tillAge = 0; state.tillRisk = 0; }
+      paintTillRisk();
     }
   }, 100);
   clearInterval(state.timers.spawn);
@@ -2465,6 +2496,12 @@ function endLevel(win){
   const avg = total ? Math.round(state.history.reduce((a,h)=>a+h.pct,0)/total*100) : 0;
   const line = '服务 <b>'+total+'</b> 位 · 完美 <b>'+perfect+'</b> 单 · 平均得分 <b>'+avg+'%</b><br>' +
                '🔥 最高连击 '+state.maxCombo+' · 😡 流失 '+state.lost+' 位';
+  // 分项损失：让玩家看清分是从哪条线上丢的
+  const st = state.stats || {lostN:0, lostMoney:0, badN:0, badMoney:0, robbed:0, pfN:0, signal:0};
+  const detail = '<br><span style="color:#8B6543">😡 等不及走 '+st.lostN+' 位（少收 $'+st.lostMoney+'） · '+
+                 '😕 做坏 '+st.badN+' 单（少赚 $'+st.badMoney+'）<br>' +
+                 '🥷 被偷 $'+st.robbed+' · ✨ 完美档 '+st.pfN+' 次'+
+                 (st.signal ? ' · 🧺 主打单 '+st.signal+' 单' : '')+'</span>';
   if(win){
     SFX.win();
     const stars = calculateStars();
@@ -2476,7 +2513,7 @@ function endLevel(win){
     const unlockMsg = unlockNote(nextId);
     modal({
       title:'🎉 今日营业额达成！',
-      html:'收入 <b>$'+state.money+'</b> / 目标 <b>$'+state.target+'</b><br>'+line+
+      html:'收入 <b>$'+state.money+'</b> / 目标 <b>$'+state.target+'</b><br>'+line+detail+
            (unlockMsg ? '<br><br><span style="color:#D6336C;font-weight:800">'+unlockMsg+'</span>' : ''),
       stars:stars,
       buttons: nextId <= LEVELS.length ? [
@@ -2489,8 +2526,8 @@ function endLevel(win){
     SFX.lose(); save();
     modal({
       title:'⏰ 打烊啦',
-      html:'今天只赚到 <b>$'+state.money+'</b>，还差 <b>$'+(state.target-state.money)+'</b><br>'+line+
-           '<br><span class="small-note">小提示：先接单再动手，手上的半成品做完就立刻交出去，别让客人干等。</span>',
+      html:'今天只赚到 <b>$'+state.money+'</b>，还差 <b>$'+(state.target-state.money)+'</b><br>'+line+detail+
+           '<br><br><span class="small-note">小提示：先接单再动手，手上的半成品做完就立刻交出去，别让客人干等；钱堆到嫌疑度 60% 就该去收了。</span>',
       buttons:[
         {text:'🔄 再试一次', action:()=>maybeItem(()=>startLevel(state.level))},
         {text:'🏠 回菜单', action:openMenu}
@@ -2518,7 +2555,7 @@ function unlockNote(nextId){
 }
 function maybeItem(then){
   const ids = Object.keys(state.ownedItems).filter(k=>state.ownedItems[k] > 0);
-  if(!ids.length){ if(then) then(); return; }
+  if(!ids.length){ pickSignature(then); return; }
   const box = mkEl('div','shop-grid');
   ITEMS.forEach(it=>{
     const own = state.ownedItems[it.id] || 0;
@@ -2529,12 +2566,40 @@ function maybeItem(then){
       applyBuff(it.id);
       state.ownedItems[it.id]--;
       if(state.ownedItems[it.id] <= 0) delete state.ownedItems[it.id];
-      save(); closeModal(); if(then) then();
+      save(); closeModal(); pickSignature(then);
     };
     box.appendChild(d);
   });
   modal({title:'🎒 要带个道具上班吗？', html:'选一个在本关生效（库存有限，用完就没了）',
-    node:box, buttons:[{text:'⏭ 不用了', action:then}]});
+    node:box, buttons:[{text:'⏭ 不用了', action:()=>pickSignature(then)}]});
+}
+/* ---- 开店前：用 1 份优质食材选「今日主打」 ---- */
+const SIG_KIND = { berry:'cake', blue:'bread', vanilla:'tea', flower:'cake' };
+function pickSignature(then){
+  const mats = Object.keys(state.town.mats).filter(k=>(state.town.mats[k]||0) > 0);
+  if(!mats.length){ state.pendingSig = null; if(then) then(); return; }
+  const box = mkEl('div','shop-grid');
+  mats.forEach(k=>{
+    const info = MAT_INFO[k], kind = SIG_KIND[k] || 'cake';
+    const d = mkEl('div','shop-item',
+      '<div class="si-e">'+info.em+'</div>'+
+      '<div class="si-n">'+info.name+' 主打</div>'+
+      '<div class="si-d">今日 '+PROD[kind].emoji+' '+PROD[kind].name+' 类订单小费 <b>+12%</b></div>'+
+      '<div class="si-p">用掉 1 份（库存 '+state.town.mats[k]+'）</div>');
+    d.onclick = ()=>{
+      state.pendingSig = {kind:kind, mat:k, mult:.12};
+      save(); closeModal(); SFX.select();
+      if(then) then();
+    };
+    box.appendChild(d);
+  });
+  modal({
+    title:'🧺 今日主打选哪个？',
+    html:'用 1 份优质食材定下今天的招牌品类，<b>只有这一类订单</b>能多拿 12% 小费。<br>'+
+         '<span class="small-note">备货的账提前算一遍：今天客人点什么多，就主打什么。</span>',
+    node:box,
+    buttons:[{text:'⏭ 不做主打', action:()=>{ state.pendingSig = null; save(); if(then) then(); }}]
+  });
 }
 function applyBuff(id){
   if(id === 'heal') state.custs.forEach(c=>{ c.pat += 10; c.max += 10; });
@@ -2919,11 +2984,13 @@ function buildBread(t, hint, stage){
     stages.appendChild(pourStage({
       label:'🌡 发酵进度', cls:'', lo:52, hi:78, start:0, rate:44, btn:'🖐 按住「发酵」',
       labelFn:v=>'🌡 发酵 '+v+'%（'+Math.round(zoneScore(v,52,78,26)*100)+'分）',
-      onDone:v=>{
+      onDone:(v,pf)=>{
         w.proveScore = zoneScore(v, 52, 78, 26);
-        w.proveVal = v; w.prove = 1;
+        w.proveVal = v; w.prove = 1; w.provePerfect = !!pf;
         SFX.plop(); vibrate(30);
-        toast(w.proveScore>=.999 ? '✨ 发酵刚刚好！' : (w.proveScore>0 ? '发酵凑合能用…' : '💤 发酵没到位'), w.proveScore>=.999?'good':'warn');
+        toast(w.provePerfect ? '🌟 完美发酵！这单额外小费 +3%' :
+              (w.proveScore>=.999 ? '✨ 发酵刚刚好！' : (w.proveScore>0 ? '发酵凑合能用…' : '💤 发酵没到位')),
+              (w.provePerfect || w.proveScore>=.999)?'good':'warn');
         renderBuild();
         checkTutorials('bake');
       }
@@ -2993,6 +3060,11 @@ function zoneScore(v, lo, hi, tol){
   if(dist <= half) return 1;
   return Math.max(0, 1 - (dist-half)/tol);
 }
+/* 绿区中间那条更窄的金色「完美档」：落在里面额外给小费 */
+function zonePerfect(v, lo, hi){
+  const mid = (lo+hi)/2, half = (hi-lo)*0.25;
+  return Math.abs(v - mid) <= half;
+}
 function pourStage(cfg){
   const wrap = mkEl('div');
   wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px';
@@ -3001,7 +3073,10 @@ function pourStage(cfg){
   const fill = mkEl('div','fill'+(cfg.cls?' '+cfg.cls:''));
   const zn = mkEl('div','zone');
   zn.style.bottom = cfg.lo+'%'; zn.style.height = (cfg.hi-cfg.lo)+'%';
-  g.appendChild(fill); g.appendChild(zn);
+  const pfMid = (cfg.lo+cfg.hi)/2, pfHalf = (cfg.hi-cfg.lo)*0.25;
+  const pz = mkEl('div','zone-pf');
+  pz.style.bottom = (pfMid-pfHalf)+'%'; pz.style.height = (pfHalf*2)+'%';
+  g.appendChild(fill); g.appendChild(zn); g.appendChild(pz);
   const btn = mkEl('button','pkey', cfg.btn);
   btn.style.cssText = 'padding:8px 18px;font-size:15px';
   wrap.appendChild(label); wrap.appendChild(g); wrap.appendChild(btn);
@@ -3010,11 +3085,12 @@ function pourStage(cfg){
     fill.style.height = val+'%';
     label.textContent = cfg.labelFn(Math.round(val));
     g.classList.toggle('gauge-glow', val >= cfg.lo && val <= cfg.hi);
+    g.classList.toggle('pf', Math.abs(val-pfMid) <= pfHalf);
   };
   paint();
   bindHold(btn, {
     onTick: dt=>{ val = Math.min(100, val + dt*cfg.rate); paint(); SFX.pour(); },
-    onEnd: ()=>cfg.onDone(val)
+    onEnd: ()=>cfg.onDone(val, zonePerfect(val, cfg.lo, cfg.hi))
   });
   if(cfg.onSkip){
     const sb = mkEl('button','btn secondary sm', cfg.skipText || '这位客人不要，跳过');
@@ -3053,7 +3129,9 @@ function buildTea(t, hint, stage){
     stages.appendChild(pourStage({
       label:'💧 注水中', cls:'tea', lo:WATER_LO, hi:WATER_HI, start:0, rate:52, btn:'🖐 按住「注水」',
       labelFn:v=>'💧 水位 '+v+'%',
-      onDone:v=>{ w.waterVal = v; w.waterS = zoneScore(v, WATER_LO, WATER_HI, 30); SFX.plop(); vibrate(30); renderBuild(); checkTutorials('milk'); }
+      onDone:(v,pf)=>{ w.waterVal = v; w.waterS = zoneScore(v, WATER_LO, WATER_HI, 30); w.waterPerfect = !!pf;
+        if(pf) toast('🌟 完美水位！这单额外小费 +3%','good');
+        SFX.plop(); vibrate(30); renderBuild(); checkTutorials('milk'); }
     }));
   }
   else if(step === 2){
@@ -3067,7 +3145,9 @@ function buildTea(t, hint, stage){
       stages.appendChild(pourStage({
         label:'🥛 加奶中', cls:'milk', lo:Math.max(2,target-11), hi:Math.min(96,target+11), start:0, rate:46, btn:'🖐 按住「加奶」',
         labelFn:v=>'🥛 奶量 '+v+'%（目标 '+target+'%）',
-        onDone:v=>{ w.milk = v; w.milkDone = true; SFX.plop(); vibrate(30); renderBuild(); checkTutorials('addin'); }
+        onDone:(v,pf)=>{ w.milk = v; w.milkDone = true; w.milkPerfect = !!pf;
+          if(pf) toast('🌟 完美奶量！这单额外小费 +3%','good');
+          SFX.plop(); vibrate(30); renderBuild(); checkTutorials('addin'); }
       }));
     }
   }
@@ -3534,9 +3614,19 @@ function renderServe(){
     cc.classList.toggle('has', tt > 0);
     cc.title = tt > 0 ? ('前台有 $'+tt+' 待收，点一下收进腰包！') : '把客人留在前台的钱收进腰包';
   }
-  if($('tillHint')) $('tillHint').textContent = tt > 0 ? ' 👆收钱' : '';
+  paintTillRisk();
   renderCash();
   updateThief();
+}
+/* 前台嫌疑度：钱在柜台上堆着的危险程度，玩家看得见 */
+function paintTillRisk(){
+  const cc = $('counterCash'), wrap = $('tillRiskWrap'), fill = $('tillRiskFill');
+  const r = state.tillRisk || 0;
+  if(wrap) wrap.classList.toggle('on', r > .01);
+  if(fill) fill.style.width = Math.round(r * 100) + '%';
+  if(cc) cc.classList.toggle('danger', r >= .6);
+  const hint = $('tillHint');
+  if(hint) hint.textContent = tillTotal() > 0 ? (r > .02 ? ' 👆收钱 '+Math.round(r*100)+'%' : ' 👆收钱') : '';
 }
 function gradeTicket(t){
   const rows = reqLines(t);
@@ -3561,19 +3651,37 @@ function serveNow(t){
   const comboStep = 0.06 + perkVal('rug');
   const bonus = g.rating === 'bad' ? 0 : Math.min(state.combo*comboStep, 0.5);
   pay = Math.round(pay * (1 + bonus));
+  // 完美档小费：发酵 / 注水 / 加奶命中绿区里的金色窄档，每档 +3%，最多 +6%
+  const pfN = (t.wip.provePerfect?1:0) + (t.wip.waterPerfect?1:0) + (t.wip.milkPerfect?1:0);
+  if(pfN) pay = Math.round(pay * (1 + Math.min(.06, pfN*.03)));
   if(g.rating === 'perfect' && state.buffs.double) pay *= 2;
   if(state.buffs.tipjar) pay += 5;
-  // 小镇带来的加成：优质食材 / 顾客偏爱
+  // 小镇带来的加成：今日主打 / 优质食材 / 顾客偏爱
+  let sigHit = false;
+  if(state.buffs.sig && t.spec.kind === state.buffs.sig.kind){ pay = Math.round(pay * 1.12); sigHit = true; }
   if(state.buffs.fresh) pay = Math.round(pay * (1 + state.buffs.fresh));
   if(state.buffs.fav)   pay = Math.round(pay * 1.1);
   pay += Math.round(perkVal('plant'));
   pay = Math.round(pay * (1 + perkVal('window')));
 
-  if(g.rating === 'bad') state.combo = 0;
+  if(g.rating === 'bad'){
+    const lostC = state.combo;
+    state.combo = Math.floor(state.combo / 2);
+    if(lostC > 0) setTimeout(()=>toast('💥 这单砸了，连击折损 '+lostC+' → '+state.combo,'warn'), 480);
+  }
   else {
     state.combo += (g.rating === 'perfect' ? 2 : 1);
     if(state.combo > state.maxCombo) state.maxCombo = state.combo;
     if(state.combo > state.bestCombo) state.bestCombo = state.combo;
+  }
+  // 打烊结算分项统计
+  if(state.stats){
+    state.stats.pfN += pfN;
+    if(sigHit) state.stats.signal++;
+    if(g.rating === 'bad'){
+      state.stats.badN++;
+      state.stats.badMoney += Math.round(t.price * (1 - (0.32 + 0.68*g.pct)));
+    }
   }
   state.served++;
   state.history.push({pct:g.pct, pay:pay, no:t.no, kind:t.spec.kind});
@@ -3594,6 +3702,7 @@ function serveNow(t){
   fx($('serveScene'), 'coin-fx', '💰', 120 + Math.random()*80, 60);
   if(g.rating==='perfect'){ SFX.perfect(); SFX.coin(); } else if(g.rating==='bad') SFX.bad(); else { SFX.good(); SFX.coin(); }
   if(bonus > 0) setTimeout(()=>toast('🔥 连击加成 +'+Math.round(bonus*100)+'%','good'), 260);
+  if(pfN) setTimeout(()=>toast('✨ 完美档 ×'+pfN+' · 小费 +'+Math.min(6, pfN*3)+'%','good'), 360);
   if(g.miss.length) setTimeout(()=>toast('小票差一点点：'+g.miss.slice(0,3).join('、'), 'warn'), 420);
 
   finishCustomer(t.cid, g);   // 客人拿到东西就直接走了
@@ -3705,6 +3814,7 @@ function tillRobberHit(){
 /* 小偷得手：把前台现金整堆偷走 */
 function stealTill(){
   const pile = tillTotal();
+  if(state.stats) state.stats.robbed += pile;
   state.till = []; state.registerCash = 0; state.tillAge = 0; state.tillRisk = 0;
   SFX.thief(); SFX.lose();
   toast('🥷 前台的 $'+pile+' 被小偷偷走了！下次看到他出现要快点他','bad');
@@ -3842,7 +3952,7 @@ const TUTS = {
     {say:'最后把<b>装饰拖</b>到蛋糕顶上摆好。小票写「不要装饰」时就一个都别放；<br>摆错或放多了，<b>点一下</b>那个装饰就能拿走。', focus:'.cake-wrap', wait:'top'},
     {say:'完工！点 <b>✅ 做好啦，放到出餐口</b>。', wait:'totray'},
     {say:'成品已经放到出餐口了！<b>客人会自己走过来取</b>。切到 💰 <b>出餐收银</b> 看看吧。', focus:'#tabs', wait:'goserve'},
-    {say:'客人取到甜品，把钱<b>放在前台</b>就走啦。<br>点一下 💵 <b>收银机</b>，把钱收进腰包。<br>⚠️ 钱堆在前台太久会引来小偷——他会现身几秒，<b>连点他</b>就能赶跑，来不及才会被偷走！还是要及时收钱。<br>客人头顶的耐心条走完会生气走人，别让人干等太久。', focus:'#counterCash', tab:'serve', wait:'collected'},
+    {say:'客人取到甜品，把钱<b>放在前台</b>就走啦。<br>点一下 💵 <b>收银机</b>，把钱收进腰包。<br>⚠️ 钱堆在前台超过 8 秒，收银机上会开始攒<b>嫌疑度条</b>——条满才会真招来小偷，小偷现身 6 秒，<b>连点他</b>就能赶跑；条到 60% 就该抽空收了。<br>客人头顶的耐心条走完会生气走人，别让人干等太久。', focus:'#counterCash', tab:'serve', wait:'collected'},
     {say:'整套流程就是这样！<br>连续做对会攒<b>连击加成</b>，抹面/火候/水位这些「手感」也会算进评分。<br>在时间结束前赚够目标金额就能过关——开店去吧 💛'}
   ]},
   bread:{title:'🥖 新品类：面包', steps:[
@@ -4281,7 +4391,7 @@ const TOWN_CATS = [
 ];
 const MINIS = [
   {id:'market', cat:'bake', em:'🧺', name:'清晨市集', desc:'限时采摘草莓、蓝莓和香草，别碰虫子和烂叶。',
-   hint:'点掉落的果子，手快一点～', rew:'优质食材 · 金币', tip:'食材会在下次开店时自动变成「今日特供」', coin:[8,22], time:24, max:16, cap:3},
+   hint:'点掉落的果子，手快一点～', rew:'优质食材 · 金币', tip:'优质食材可以在开店前选成「今日主打」，那类订单小费 +12%', coin:[8,22], time:24, max:16, cap:3},
   {id:'piping', cat:'bake', em:'🎂', name:'奶油裱花', desc:'按住鼠标沿着虚线挤奶油，经过每一个小圆点。',
    hint:'按住拖动，别松手', rew:'裱花样式 · 金币', tip:'高评价还会记进你的手记里', coin:[10,26], time:24, max:10, cap:3},
   {id:'puzzle', cat:'bake', em:'📖', name:'配方拼图', desc:'把打乱的步骤排回正确顺序，还原一份完整配方。',
